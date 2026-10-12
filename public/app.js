@@ -88,6 +88,7 @@
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const path = `${proto}//${location.host}/ws?room=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}`;
     socket = new WebSocket(path);
+    window.YSChat?.attachSocket(socket);
     socket.onopen = () => connectionStatus(true);
     socket.onmessage = (evt) => {
       let message;
@@ -260,6 +261,7 @@
     renderGallery();
     if (state.stage === 'setup') renderSetup(); else renderPlay();
     renderScores(); renderHistory(); renderFeed();
+    window.YSChat?.render(state);
   }
   async function copy(value) {
     try { await navigator.clipboard.writeText(value); toast('클립보드에 복사했어요!'); }
