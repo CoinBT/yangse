@@ -7,6 +7,7 @@
   <title>양세찬 게임 · WHO AM I?</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/chat.css">
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -57,6 +58,12 @@
         </section>
         <aside class="side-panel">
           <section class="panel action-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm" id="actionEyebrow">YOUR MISSION</span><h2 id="actionTitle">비밀 주제 정하기</h2></div><span id="actionIcon" class="panel-emoji">✏️</span></div><div id="actionContent"></div></section>
+          <section class="panel chat-panel" aria-labelledby="chatTitle">
+            <div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">LIVE CHAT</span><h2 id="chatTitle">💬 실시간 채팅</h2></div><span class="chat-tag">참가자 · 관전자</span></div>
+            <div id="chatMessages" class="chat-messages" role="log" aria-label="게임방 채팅" aria-live="polite"><div class="chat-empty">친구들과 이야기해 보세요! 🎉</div></div>
+            <form id="chatForm" class="chat-form" autocomplete="off"><label class="sr-only" for="chatInput">메시지 입력</label><input id="chatInput" type="text" maxlength="300" placeholder="모두에게 메시지 보내기…" aria-label="채팅 메시지"><button id="chatSend" class="btn btn-primary" type="submit">전송 ↗</button></form>
+            <p class="chat-helper">참가자와 관전자 모두 채팅할 수 있어요. · 최대 300자</p>
+          </section>
           <section class="panel scoreboard-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">HALL OF FAME</span><h2>누적 스코어보드</h2></div><span class="panel-emoji">🏆</span></div><div id="scoreboard" class="scoreboard"></div></section>
         </aside>
       </div>
@@ -68,6 +75,7 @@
     </main>
   </div>
   <div id="toast" class="toast" aria-live="polite"></div>
+  <script src="/chat.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
