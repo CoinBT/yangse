@@ -1,0 +1,13 @@
+# Render 무료 웹 서비스 배포 설정 (GitHub 저장소 루트에 업로드)
+services:
+  - type: web
+    name: yangsechan-webgame
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm install --omit=dev --ignore-scripts
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production

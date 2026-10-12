@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#120f1d">
+  <title>양세찬 게임 · WHO AM I?</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <a href="/" class="brand" aria-label="양세찬게임 홈"><span class="brand-mark">🎭</span><span><strong>양세찬 게임</strong><small>WHO AM I?</small></span></a>
+      <div class="top-meta"><span class="live-indicator"><span class="live-dot" id="liveDot"></span><span id="connectionText">온라인 파티 게임</span></span><span class="top-tag">2–12 PLAYERS</span></div>
+    </header>
+
+    <main id="landing" class="landing">
+      <div class="landing-copy">
+        <span class="eyebrow">THE PARTY STARTS HERE <span class="sparkle">✳</span></span>
+        <h1>내 정체를<br><span>맞혀봐!</span></h1>
+        <p>친구가 정해준 비밀 주제로 질문하고, 추리하고, 정답을 외쳐보세요. 원형으로 돌아가는 12인 실시간 양세찬 게임!</p>
+        <div class="feature-pills"><span>✦ 최대 12명 참가</span><span>◉ 관전 인원 제한 없음</span><span>⚡ 실시간 투표</span></div>
+        <div class="rule-preview"><span class="preview-label">HOW TO PLAY</span><div><b>01</b> 오른쪽 사람의 주제를 적어요</div><div><b>02</b> 랜덤 시작, 시계 방향으로 차례 진행</div><div><b>03</b> 정답 투표 → 100 / 80 / 60점!</div></div>
+      </div>
+      <div class="entry-card">
+        <div class="card-topline"><span>🎲</span><span class="tiny-light">● LIVE ROOM</span></div>
+        <h2 id="entryTitle">게임에 참여하기</h2>
+        <p class="muted" id="entrySubtitle">방을 만들거나, 초대 코드를 입력하세요.</p>
+        <div class="tab-switch"><button id="tabCreate" class="tab is-active" type="button">방 만들기</button><button id="tabJoin" class="tab" type="button">방 참가하기</button></div>
+        <form id="entryForm" autocomplete="off">
+          <label for="nickname">닉네임</label><input id="nickname" class="field" type="text" placeholder="예: 명탐정" maxlength="18" required>
+          <div id="joinFields" class="hidden">
+            <label for="joinCode">초대 코드</label><input id="joinCode" class="field invite-input" type="text" placeholder="6자리 코드" maxlength="6" autocapitalize="characters">
+            <label>참여 유형</label>
+            <div class="role-picker"><button type="button" class="role is-selected" data-role="player">🙋 참가자 <small>게임 참여</small></button><button type="button" class="role" data-role="spectator">👀 관전자 <small>구경만 하기</small></button></div>
+          </div>
+          <button id="entrySubmit" type="submit" class="btn btn-primary btn-wide">새 게임방 만들기 <span>↗</span></button>
+        </form>
+        <div class="entry-foot">별도의 회원가입 없이 · 호스트 PC 서버로 운영</div>
+      </div>
+    </main>
+
+    <main id="roomView" class="hidden">
+      <section class="room-heading">
+        <div><span class="eyebrow" id="roomEyebrow">PARTY ROOM</span><h1>우리는 지금 <em>누구?</em></h1><p class="muted" id="roomSubtitle">게임 참가자가 모이면 주제를 정해 주세요.</p></div>
+        <div class="room-share"><span class="share-label">초대 코드</span><div><strong id="roomCode" class="room-code">------</strong><button class="icon-button" id="copyCode" title="코드 복사">⧉</button></div><button class="btn btn-outline btn-small" id="copyInvite">🔗 초대 링크 복사</button></div>
+      </section>
+      <div class="status-row"><span id="phaseBadge" class="phase-badge">주제 정하기</span><span class="light-divider"></span><span>🙋 <strong id="peopleCount">0</strong> / 12</span><span>👀 관전 <strong id="spectatorCount">0</strong></span><span class="connection-status" id="selfBadge"></span></div>
+      <div class="game-grid">
+        <section class="board-panel panel">
+          <div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">THE CIRCLE</span><h2>둥글게, 둥글게!</h2></div><span id="boardHint" class="hint-pill">시계 방향 →</span></div>
+          <div class="circle-area"><div id="circleBoard" class="circle-board"><div class="ring ring-outer"></div><div class="ring ring-mid"></div><div id="boardCenter" class="board-center"></div><div id="seats" class="seats"></div></div></div>
+          <div class="legend"><span><i class="legend-dot dot-me"></i>나</span><span><i class="legend-dot dot-turn"></i>현재 차례</span><span><i class="legend-dot dot-finished"></i>정답 완료</span><span><i class="legend-dot dot-offline"></i>오프라인</span></div>
+          <div id="topicGallery" class="topic-gallery hidden"></div>
+        </section>
+        <aside class="side-panel">
+          <section class="panel action-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm" id="actionEyebrow">YOUR MISSION</span><h2 id="actionTitle">비밀 주제 정하기</h2></div><span id="actionIcon" class="panel-emoji">✏️</span></div><div id="actionContent"></div></section>
+          <section class="panel scoreboard-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">HALL OF FAME</span><h2>누적 스코어보드</h2></div><span class="panel-emoji">🏆</span></div><div id="scoreboard" class="scoreboard"></div></section>
+        </aside>
+      </div>
+      <div class="lower-grid">
+        <section class="panel history-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">PAST GAMES</span><h2>지난 게임 결과</h2></div><span class="panel-emoji">📜</span></div><div id="historyContent"></div></section>
+        <section class="panel feed-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">ACTIVITY FEED</span><h2>게임 진행 기록</h2></div><span class="panel-emoji">⚡</span></div><div id="feedContent"></div></section>
+      </div>
+      <footer class="footer">🎭 양세찬 게임 · 호스트가 서버를 운영합니다. <button id="leaveRoom" class="text-button">이 화면에서 나가기</button></footer>
+    </main>
+  </div>
+  <div id="toast" class="toast" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
