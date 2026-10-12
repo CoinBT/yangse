@@ -264,7 +264,7 @@
     if (state.stage === 'setup') renderSetup(); else renderPlay();
     renderScores(); renderHistory(); renderFeed();
     window.YSChat?.render(state);
-    window.YSMode?.render(state, act);
+    window.YSMode?.render(state, act, draftText);
   }
   async function copy(value) {
     try { await navigator.clipboard.writeText(value); toast('클립보드에 복사했어요!'); }
