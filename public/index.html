@@ -8,6 +8,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/chat.css">
+  <link rel="stylesheet" href="/modes.css">
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -22,8 +23,8 @@
         <span class="eyebrow">THE PARTY STARTS HERE <span class="sparkle">✳</span></span>
         <h1>내 정체를<br><span>맞혀봐!</span></h1>
         <p>친구가 정해준 비밀 주제로 질문하고, 추리하고, 정답을 외쳐보세요. 원형으로 돌아가는 12인 실시간 양세찬 게임!</p>
-        <div class="feature-pills"><span>✦ 최대 12명 참가</span><span>◉ 관전 인원 제한 없음</span><span>⚡ 실시간 투표</span></div>
-        <div class="rule-preview"><span class="preview-label">HOW TO PLAY</span><div><b>01</b> 오른쪽 사람의 주제를 적어요</div><div><b>02</b> 랜덤 시작, 시계 방향으로 차례 진행</div><div><b>03</b> 정답 투표 → 100 / 80 / 60점!</div></div>
+        <div class="feature-pills"><span>✦ 최대 12명 참가</span><span>◉ 관전 인원 제한 없음</span><span>⚡ 정답 자동 판정</span></div>
+        <div class="rule-preview"><span class="preview-label">HOW TO PLAY</span><div><b>01</b> 오른쪽 사람의 주제를 적어요</div><div><b>02</b> 랜덤 시작, 시계 방향으로 차례 진행</div><div><b>03</b> 정답 입력 → 자동 판정 · 100 / 80 / 60점!</div></div>
       </div>
       <div class="entry-card">
         <div class="card-topline"><span>🎲</span><span class="tiny-light">● LIVE ROOM</span></div>
@@ -76,6 +77,7 @@
   </div>
   <div id="toast" class="toast" aria-live="polite"></div>
   <script src="/chat.js" defer></script>
+  <script src="/modes.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
