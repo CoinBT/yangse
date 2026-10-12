@@ -61,7 +61,7 @@
     if (s.winners.length) html += '<div class="alert-slice purple">✅ 정답 완료: ' + s.winners.map(w => esc(w.name)).join(', ') + '</div>';
     if (!waiting && isMyTurn) {
       html += '<div class="mission-box"><div class="mission-name">내 비밀 주제를 추리해 보세요!</div><div class="mission-hint">질문은 호스트가 답변합니다. 정답을 직접 입력하면 서버에서 즉시 판정해요.</div></div>' +
-        '<label for="actionText">질문 또는 예상 정답</label><input class="field" type="text" id="actionText" maxlength="100" placeholder="정답일 땐 정확한 단어를 입력해 주세요">' +
+        '<label for="actionText">질문 또는 예상 정답</label><input class="field" type="text" id="actionText" maxlength="100" placeholder="정답일 땐 정확한 단어를 입력해 주세요" value="' + esc(actionDraft || '') + '">' +
         '<div class="action-buttons"><button type="button" class="btn btn-outline" data-event="question">❔ 호스트에게 질문<small>답변 후 다음 차례</small></button>' +
         '<button type="button" class="btn btn-yellow" data-event="answer">✨ 정답 시도<small>자동 정답 / 오답</small></button></div>';
     } else if (waiting && waiting.type === 'question') {
