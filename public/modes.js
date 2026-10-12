@@ -46,7 +46,7 @@
     root.innerHTML = html;
   }
 
-  function renderHostPlay(s, root) {
+  function renderHostPlay(s, root, actionDraft) {
     const current = s.people.find(p => p.id === s.turnId);
     const isMyTurn = s.turnId === s.me.id && s.me.role === 'player';
     const waiting = s.pending;
@@ -95,7 +95,7 @@
     }).join('');
   }
 
-  function render(s, act) {
+  function render(s, act, actionDraft) {
     state = s; send = act;
     const root = $('actionContent');
     if (!root) return;
@@ -111,7 +111,7 @@
         $('boardHint').textContent = '호스트가 각 도전자에게 주제 지정';
       } else if (s.me.host) root.insertAdjacentHTML('afterbegin', picker(s));
     } else if (s.gameMode === 'host_show') {
-      renderHostPlay(s, root);
+      renderHostPlay(s, root, actionDraft);
     } else {
       const label = root.querySelector('[data-event="answer"] small');
       if (label) label.textContent = '자동 정답 / 오답 판정';
