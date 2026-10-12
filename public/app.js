@@ -100,7 +100,7 @@
         if (previous && previous.stage === 'play' && state.stage === 'setup' && state.lastOutcome?.round !== lastRoundSeen) {
           lastRoundSeen = state.lastOutcome.round;
           draftTopic = ''; draftText = '';
-          toast('🎉 이번 판이 끝났어요! 다음 판의 주제를 정해 주세요.');
+          toast('🎉 이번 판이 끝났어요! 다음 판을 준비해 주세요.');
         }
         render();
       }
@@ -120,6 +120,8 @@
   function isMeTurn() { return state?.stage === 'play' && state.me.role === 'player' && state.turnId === state.me.id; }
   function seatText(p) {
     if (p.finished) return '✓ 정답 완료';
+    if (state.gameMode === 'host_show' && p.id === state.hostId) return '👑 진행 호스트';
+    if (state.gameMode === 'host_show' && state.me.id !== state.hostId) return '🔒 비밀 주제';
     if (state.me.id === p.id) return '🔒 나의 주제 비밀';
     if (state.me.role === 'spectator' && !spoilerShown) return p.subjectReady ? '비밀 주제' : '주제 대기';
     const subject = state.topics[p.id];
@@ -262,6 +264,7 @@
     if (state.stage === 'setup') renderSetup(); else renderPlay();
     renderScores(); renderHistory(); renderFeed();
     window.YSChat?.render(state);
+    window.YSMode?.render(state, act);
   }
   async function copy(value) {
     try { await navigator.clipboard.writeText(value); toast('클립보드에 복사했어요!'); }
