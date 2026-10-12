@@ -29,6 +29,8 @@ function load() {
       room.winners ||= [];
       room.roundNo ||= 0;
       room.stage ||= 'setup';
+      room.gameMode ||= 'classic';
+      room.turnSteps ||= 0;
       // 서버 재시작 뒤에는 누가 접속 중인지 재확인하므로 대기 중인 투표를 취소합니다.
       room.pending = null;
       rooms.set(room.code, room);
@@ -55,6 +57,13 @@ function roomCode() {
 }
 function cleanName(name) { return String(name || '').trim().replace(/\s+/g, ' ').slice(0, 18); }
 function cleanTopic(value) { return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 50); }
+function normalizeAnswer(value) {
+  return String(value || '').normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/[\s.,!?。！？]+/g, '');
+}
+function hostShow(room) { return room.gameMode === 'host_show'; }
+function challengers(room) { return players(room).filter(u => u.id !== room.hostId); }
+function threshold(room) { return Math.floor(challengers(room).length / 2) + 1; }
+function topicCount(room) { return (hostShow(room) ? challengers(room) : players(room)).filter(u => !!room.topics[u.id]).length; }
 function fail(message, status = 400) { const e = new Error(message); e.status = status; throw e; }
 function players(room) { return room.members.filter(u => u.role === 'player'); }
 function member(room, token) { return room.members.find(u => u.token === token); }
@@ -86,7 +95,8 @@ function createRoom(name) {
     code, hostId: host.id, stage: 'setup', members: [host], clients: new Set(),
     topics: {}, scores: { [host.id]: { name, total: 0, wins: 0 } },
     history: [], winners: [], roundNo: 0, turnOrder: [], cursor: 0,
-    pending: null, lastOutcome: null, log: [], chat: [], createdAt: Date.now()
+    pending: null, lastOutcome: null, log: [], chat: [], gameMode: 'classic',
+    turnSteps: 0, createdAt: Date.now()
   };
   rooms.set(code, room);
   note(room, `${name}님이 게임방을 만들었어요.`);
@@ -128,29 +138,33 @@ function publicState(room, viewer) {
   const people = players(room);
   const own = people.find(u => u.id === viewer.id);
   const turn = currentId(room);
-  const target = own && rightOf(room, viewer.id);
+  const target = own && !hostShow(room) && rightOf(room, viewer.id);
   const topics = {};
   for (const u of people) {
     // 본인의 주제는 서버에서 아예 전달하지 않음.
     const t = room.topics[u.id];
-    topics[u.id] = t ? (u.id === viewer.id ? null : t.text) : null;
+    topics[u.id] = t ? (hostShow(room) ? (viewer.id === room.hostId ? t.text : null) : (u.id === viewer.id ? null : t.text)) : null;
   }
   const eligible = room.pending?.type === 'answer' ? activePlayers(room).filter(u => u.id !== room.pending.actorId).map(u => u.id) : [];
   const votes = room.pending?.votes || {};
   return {
-    code: room.code, stage: room.stage, roundNo: room.roundNo,
+    code: room.code, stage: room.stage, roundNo: room.roundNo, gameMode: room.gameMode || 'classic',
+    turnSteps: room.turnSteps || 0, maxTurns: hostShow(room) ? challengers(room).length * 4 : 0,
+    threshold: hostShow(room) ? threshold(room) : 0, challengerCount: hostShow(room) ? challengers(room).length : 0,
     me: { id: viewer.id, name: viewer.name, role: viewer.role, host: viewer.id === room.hostId },
     hostId: room.hostId,
     people: people.map(u => ({ id: u.id, name: u.name, online: online(room, u.id), finished: room.winners.some(w => w.id === u.id), subjectReady: !!room.topics[u.id] })),
     spectatorCount: room.members.filter(u => u.role === 'spectator' && online(room, u.id)).length,
     topics,
     myRightTarget: target ? { id: target.id, name: target.name, assigned: !!room.topics[target.id], text: room.topics[target.id]?.text || '' } : null,
-    readyCount: people.filter(u => !!room.topics[u.id]).length,
-    canStart: room.stage === 'setup' && people.length >= 2 && people.every(u => !!room.topics[u.id]) && people.every(u => online(room, u.id)),
+    readyCount: topicCount(room),
+    topicTargets: viewer.id === room.hostId && hostShow(room) ? challengers(room).map(u => ({ id: u.id, name: u.name, text: room.topics[u.id]?.text || '', assigned: !!room.topics[u.id] })) : [],
+    canStart: room.stage === 'setup' && people.length >= 2 && (hostShow(room) ? challengers(room) : people).every(u => !!room.topics[u.id]) && people.every(u => online(room, u.id)),
     turnId: turn,
     firstId: room.firstId || null,
     pending: room.pending ? {
       type: room.pending.type, actorId: room.pending.actorId, text: room.pending.text || '',
+      reply: room.pending.reply || '',
       correct: Object.values(votes).filter(v => v === 'correct').length,
       wrong: Object.values(votes).filter(v => v === 'wrong').length,
       total: eligible.length,
@@ -166,8 +180,25 @@ function publicState(room, viewer) {
     chat: (room.chat || []).slice(-60)
   };
 }
+function finishHostShow(room, winnerSide, forced = false) {
+  room.hostOutcome = { winnerSide, correctCount: room.winners.length, required: threshold(room),
+    lapsUsed: Math.min(4, Math.ceil((room.turnSteps + 1) / Math.max(1, challengers(room).length))) };
+  note(room, winnerSide === 'challengers' ? '🎊 Host Show! 도전자팀의 승리!' : winnerSide === 'host' ? '👑 Host Show! 호스트의 승리!' : 'Host Show! 게임 종료');
+  finishRound(room, forced);
+}
 function nextTurn(room) {
   const size = room.turnOrder.length;
+  if (hostShow(room)) {
+    if (!size) return;
+    for (let i = 0; i < size; i++) {
+      room.turnSteps = (room.turnSteps || 0) + 1;
+      if (room.turnSteps >= size * 4) return finishHostShow(room, 'host');
+      room.cursor = (room.cursor + 1) % size;
+      const uid = room.turnOrder[room.cursor];
+      if (!room.winners.some(w => w.id === uid) && online(room, uid)) return;
+    }
+    return;
+  }
   for (let i = 0; i < size; i++) {
     room.cursor = (room.cursor + 1) % size;
     const u = room.turnOrder[room.cursor];
@@ -181,6 +212,8 @@ function finishRound(room, forced = false) {
     round: room.roundNo,
     at: Date.now(),
     winners: room.winners.map(w => ({ ...w })),
+    mode: room.gameMode || 'classic',
+    hostOutcome: room.hostOutcome || null,
     forced
   };
   room.history.push(outcome);
@@ -192,6 +225,8 @@ function finishRound(room, forced = false) {
   room.turnOrder = [];
   room.cursor = 0;
   room.firstId = null;
+  room.turnSteps = 0;
+  room.hostOutcome = null;
   note(room, `제${outcome.round}판이 종료됐어요. 새로운 주제를 적어 주세요!`);
 }
 function resolveVotes(room) {
@@ -254,14 +289,24 @@ function command(room, user, commandName, payload = {}) {
       appendChat(room, { kind: 'message', userId: user.id, name: user.name, role: user.role, text });
       break;
     }
+    case 'set_mode': {
+      if (!isHost || !setup) fail('대기실에서 호스트만 모드를 바꿀 수 있어요.');
+      if (!['classic', 'host_show'].includes(payload.mode)) fail('지원하지 않는 게임 모드예요.');
+      room.gameMode = payload.mode;
+      room.topics = {};
+      room.turnSteps = 0;
+      note(room, hostShow(room) ? '👑 Host Show! 모드 선택 — 호스트가 주제를 배정합니다.' : '🎭 클래식 모드 선택');
+      break;
+    }
     case 'set_topic': {
       if (!setup || user.role !== 'player') fail('지금은 주제를 작성할 수 없어요.');
-      const target = rightOf(room, user.id);
-      if (!target) fail('참가자가 두 명 이상 필요해요.');
+      const target = hostShow(room) ? challengers(room).find(u => u.id === payload.targetId) : rightOf(room, user.id);
+      if (hostShow(room) && !isHost) fail('Host Show!에서는 호스트만 주제를 정할 수 있어요.');
+      if (!target) fail('주제를 지정할 도전자가 없어요.');
       const topic = cleanTopic(payload.topic);
       if (!topic) fail('주제를 한 글자 이상 입력해 주세요.');
       room.topics[target.id] = { authorId: user.id, text: topic };
-      note(room, `${user.name}님이 오른쪽 사람의 주제를 확정했어요.`);
+      note(room, hostShow(room) ? `호스트가 ${target.name}님의 주제를 정했어요.` : `${user.name}님이 오른쪽 사람의 주제를 확정했어요.`);
       break;
     }
     case 'start': {
@@ -269,16 +314,19 @@ function command(room, user, commandName, payload = {}) {
       const p = players(room);
       if (p.length < 2) fail('최소 2명의 참가자가 필요해요.');
       if (p.some(u => !online(room, u.id))) fail('모든 참가자가 접속해야 시작할 수 있어요. 오프라인 참가자를 내보내거나 재접속해 주세요.');
-      if (p.some(u => !room.topics[u.id])) fail('모든 사람의 주제가 입력돼야 시작할 수 있어요.');
+      if ((hostShow(room) ? challengers(room) : p).some(u => !room.topics[u.id])) fail('모든 도전자의 주제가 입력돼야 시작할 수 있어요.');
       room.stage = 'play';
       room.roundNo += 1;
       room.winners = [];
-      room.turnOrder = p.map(u => u.id);
-      room.cursor = crypto.randomInt(p.length);
+      const playingPeople = hostShow(room) ? challengers(room) : p;
+      room.turnOrder = playingPeople.map(u => u.id);
+      room.turnSteps = 0;
+      room.hostOutcome = null;
+      room.cursor = crypto.randomInt(playingPeople.length);
       room.firstId = currentId(room);
       room.lastOutcome = null;
       room.pending = null;
-      note(room, `🎲 제${room.roundNo}판 시작! ${p[room.cursor].name}님이 첫 차례예요.`);
+      note(room, `🎲 제${room.roundNo}판 ${hostShow(room) ? 'Host Show!' : '클래식'} 시작! ${playingPeople[room.cursor].name}님이 첫 차례예요.`);
       break;
     }
     case 'question': {
@@ -287,7 +335,17 @@ function command(room, user, commandName, payload = {}) {
       note(room, `${user.name}님이 질문을 선택했어요.`);
       break;
     }
+    case 'host_reply': {
+      if (!isHost || !playing || !hostShow(room) || pend?.type !== 'question') fail('지금은 호스트가 답변할 차례가 아니에요.');
+      const reply = String(payload.reply || '').trim().slice(0, 150);
+      if (!reply) fail('질문에 대한 답변을 입력해 주세요.');
+      note(room, `👑 호스트 답변: ${reply}`);
+      room.pending = null;
+      nextTurn(room);
+      break;
+    }
     case 'confirm_question': {
+      if (hostShow(room)) fail('Host Show!에서는 호스트가 답변해야 다음 차례로 넘어가요.');
       if (!isActor || pend?.type !== 'question' || pend.actorId !== user.id) fail('질문을 확인할 수 없어요.');
       room.pending = null;
       note(room, `${user.name}님이 질문을 마치고 다음 사람에게 넘겼어요.`);
@@ -296,14 +354,29 @@ function command(room, user, commandName, payload = {}) {
     }
     case 'answer': {
       if (!isActor || pend) fail('현재 차례에만 정답을 시도할 수 있어요.');
-      const eligible = activePlayers(room).filter(u => u.id !== user.id);
-      if (!eligible.length) fail('투표할 수 있는 다른 참가자가 접속해야 해요.');
-      room.pending = { type: 'answer', actorId: user.id, text: String(payload.text || '').trim().slice(0, 100), votes: {} };
-      note(room, `${user.name}님이 정답을 말했어요. 참가자들의 판정을 기다립니다.`);
+      const text = String(payload.text || '').trim().slice(0, 100);
+      if (!text) fail('자동 판정을 위해 정답을 입력해 주세요.');
+      const expected = room.topics[user.id]?.text;
+      if (!expected) fail('비밀 주제가 준비되지 않았어요.');
+      if (normalizeAnswer(text) === normalizeAnswer(expected)) {
+        const rank = room.winners.length + 1;
+        const points = hostShow(room) ? 0 : (RANK_POINTS[rank - 1] || 0);
+        room.winners.push({ id: user.id, name: user.name, rank, points });
+        if (!hostShow(room)) {
+          room.scores[user.id].total += points;
+          room.scores[user.id].wins += 1;
+        }
+        note(room, `🎉 ${user.name}님 자동 정답! ${hostShow(room) ? '도전자 ' + room.winners.length + '/' + challengers(room).length : rank + '등 +' + points + '점'}`);
+        if (hostShow(room) && room.winners.length >= threshold(room)) return finishHostShow(room, 'challengers');
+        if (!hostShow(room) && room.winners.length >= Math.min(3, players(room).length)) return finishRound(room);
+      } else {
+        note(room, `❌ ${user.name}님의 정답 시도는 오답이에요: ${text}`);
+      }
+      nextTurn(room);
       break;
     }
     case 'vote': {
-      if (!playing || pend?.type !== 'answer') fail('지금은 투표할 수 없어요.');
+      if (!playing || pend?.type !== 'answer') fail('정답은 이제 서버에서 자동으로 판정해요.');
       if (user.role !== 'player' || user.id === pend.actorId || !online(room, user.id)) fail('이 투표에 참여할 수 없어요.');
       if (pend.votes[user.id]) fail('이미 투표했어요.');
       if (!['correct', 'wrong'].includes(payload.vote)) fail('정답 또는 오답을 골라 주세요.');
@@ -320,7 +393,8 @@ function command(room, user, commandName, payload = {}) {
     }
     case 'end_round': {
       if (!isHost || !playing) fail('호스트만 판을 종료할 수 있어요.');
-      finishRound(room, true);
+      if (hostShow(room)) finishHostShow(room, 'cancelled', true);
+      else finishRound(room, true);
       break;
     }
     case 'remove_player': {
@@ -494,4 +568,4 @@ if (require.main === module) {
     console.log('  인터넷 친구 초대: README.md의 Cloudflare Tunnel 안내 참고\n');
   });
 }
-module.exports = { server, rooms, createRoom, joinRoom, rejoinRoom, command, publicState, players, broadcast, resolveVotes, finishRound };
+module.exports = { server, rooms, createRoom, joinRoom, rejoinRoom, command, publicState, players, broadcast, resolveVotes, finishRound, normalizeAnswer };
