@@ -22,6 +22,7 @@ function load() {
       if (!room?.code || !Array.isArray(room.members)) continue;
       room.clients = new Set();
       room.log ||= [];
+      room.chat ||= [];
       room.scores ||= {};
       room.history ||= [];
       room.topics ||= {};
@@ -70,6 +71,12 @@ function note(room, message) {
   room.log.unshift({ id: id(5), message, at: Date.now() });
   room.log = room.log.slice(0, 12);
 }
+function appendChat(room, data) {
+  room.chat ||= [];
+  room.chat.push({ id: id(6), at: Date.now(), ...data });
+  if (room.chat.length > 80) room.chat = room.chat.slice(-80);
+}
+function systemChat(room, text) { appendChat(room, { kind: 'system', text }); }
 function createRoom(name) {
   name = cleanName(name);
   if (!name) fail('닉네임을 입력해 주세요.');
@@ -79,10 +86,11 @@ function createRoom(name) {
     code, hostId: host.id, stage: 'setup', members: [host], clients: new Set(),
     topics: {}, scores: { [host.id]: { name, total: 0, wins: 0 } },
     history: [], winners: [], roundNo: 0, turnOrder: [], cursor: 0,
-    pending: null, lastOutcome: null, log: [], createdAt: Date.now()
+    pending: null, lastOutcome: null, log: [], chat: [], createdAt: Date.now()
   };
   rooms.set(code, room);
   note(room, `${name}님이 게임방을 만들었어요.`);
+  systemChat(room, `${name}님이 채팅방을 열었어요. 👋`);
   persist();
   return { code, token: host.token, role: host.role, userId: host.id };
 }
@@ -100,6 +108,7 @@ function joinRoom(code, name, mode) {
   }
   const user = { id: id(8), token: id(24), name, role };
   room.members.push(user);
+  systemChat(room, `${name}님이 ${role === 'spectator' ? '관전석에' : '게임에'} 입장했어요.`);
   if (role === 'player') {
     room.scores[user.id] = { name, total: 0, wins: 0 };
     room.topics = {}; // 순서가 바뀌면 오른쪽 이웃이 달라져 주제를 다시 입력받음
@@ -153,7 +162,8 @@ function publicState(room, viewer) {
     scoreboard: Object.entries(room.scores).map(([userId, s]) => ({ userId, name: s.name, total: s.total, wins: s.wins })).sort((a, b) => b.total - a.total || b.wins - a.wins || a.name.localeCompare(b.name, 'ko')),
     history: room.history.slice(-10).reverse(),
     lastOutcome: room.lastOutcome,
-    log: room.log.slice(0, 6)
+    log: room.log.slice(0, 6),
+    chat: (room.chat || []).slice(-60)
   };
 }
 function nextTurn(room) {
@@ -232,6 +242,18 @@ function command(room, user, commandName, payload = {}) {
   const isActor = playing && user.id === currentId(room);
   const pend = room.pending;
   switch (commandName) {
+    case 'chat': {
+      if (!room.members.some(u => u.id === user.id)) fail('채팅방에서 퇴장한 사용자예요.');
+      if (typeof payload.text !== 'string') fail('메시지를 입력해 주세요.');
+      const text = payload.text.replace(/[\x00-\x1f\x7f]/g, ' ').trim();
+      if (!text) fail('메시지를 입력해 주세요.');
+      if ([...text].length > 300) fail('채팅은 300자 이내로 입력해 주세요.');
+      const now = Date.now();
+      if (now - (user.lastChatAt || 0) < 850) fail('채팅은 잠깐 간격을 두고 전송해 주세요.');
+      user.lastChatAt = now;
+      appendChat(room, { kind: 'message', userId: user.id, name: user.name, role: user.role, text });
+      break;
+    }
     case 'set_topic': {
       if (!setup || user.role !== 'player') fail('지금은 주제를 작성할 수 없어요.');
       const target = rightOf(room, user.id);
@@ -309,6 +331,7 @@ function command(room, user, commandName, payload = {}) {
       for (const ws of room.clients) if (ws.userId === target.id) ws.close();
       room.topics = {};
       note(room, `${target.name}님이 퇴장했어요. 주제를 다시 지정해 주세요.`);
+      systemChat(room, `${target.name}님이 게임방에서 퇴장했어요.`);
       break;
     }
     case 'rename': {
@@ -429,7 +452,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method !== 'GET') return respond(res, 405, { error: '허용되지 않은 요청이에요.' });
     let resource = url.pathname === '/' ? '/index.html' : url.pathname;
-    if (!['/index.html', '/style.css', '/app.js', '/favicon.svg'].includes(resource)) return respond(res, 404, { error: '페이지를 찾을 수 없어요.' });
+    if (!['/index.html', '/style.css', '/app.js', '/favicon.svg', '/chat.js', '/chat.css'].includes(resource)) return respond(res, 404, { error: '페이지를 찾을 수 없어요.' });
     const file = path.join(ROOT, resource);
     res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options':'nosniff' });
     fs.createReadStream(file).pipe(res);
