@@ -367,12 +367,13 @@ function command(room, user, commandName, payload = {}) {
           room.scores[user.id].wins += 1;
         }
         note(room, `🎉 ${user.name}님 자동 정답! ${hostShow(room) ? '도전자 ' + room.winners.length + '/' + challengers(room).length : rank + '등 +' + points + '점'}`);
-        if (hostShow(room) && room.winners.length >= threshold(room)) return finishHostShow(room, 'challengers');
-        if (!hostShow(room) && room.winners.length >= Math.min(3, players(room).length)) return finishRound(room);
+        if (hostShow(room) && room.winners.length >= threshold(room)) finishHostShow(room, 'challengers');
+        else if (!hostShow(room) && room.winners.length >= Math.min(3, players(room).length)) finishRound(room);
+        else nextTurn(room);
       } else {
         note(room, `❌ ${user.name}님의 정답 시도는 오답이에요: ${text}`);
+        nextTurn(room);
       }
-      nextTurn(room);
       break;
     }
     case 'vote': {
