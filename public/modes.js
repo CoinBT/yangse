@@ -81,6 +81,18 @@
     $('boardHint').textContent = '👑 ' + lap + '/4 바퀴 · 정답 ' + s.winners.length + '/' + s.threshold;
   }
 
+  function renderHostGallery(s) {
+    const gallery = $('topicGallery');
+    if (!gallery || s.stage !== 'play') return;
+    gallery.classList.remove('hidden');
+    let text = '<div class="gallery-heading"><span>👑 Host Show! · 비밀 주제 (' + (s.me.host ? '호스트 전용 정답표' : '호스트만 정답 열람 가능') + ')</span></div><div class="gallery-items">';
+    for (const person of s.people) {
+      const subject = person.id === s.hostId ? '진행 호스트' : person.finished ? '✅ 정답 완료' : s.me.host ? (s.topics[person.id] || '주제 없음') : '🔒 비밀 주제';
+      text += '<div class="gallery-card"><div class="gallery-name">' + esc(person.name) + '</div><div class="gallery-topic ' + (s.me.host ? '' : 'hidden-topic') + '">' + esc(subject) + '</div></div>';
+    }
+    gallery.innerHTML = text + '</div>';
+  }
+
   function renderHistory(s) {
     const box = $('historyContent');
     if (!s.history.some(h => h.hostOutcome)) return;
@@ -109,9 +121,12 @@
         $('actionIcon').textContent = '👑';
         renderHostSetup(s, root);
         $('boardHint').textContent = '호스트가 각 도전자에게 주제 지정';
+        const centerInfo = $('boardCenter')?.querySelector('.center-info');
+        if (centerInfo) centerInfo.textContent = s.readyCount + ' / ' + s.challengerCount + '명 주제 지정';
       } else if (s.me.host) root.insertAdjacentHTML('afterbegin', picker(s));
     } else if (s.gameMode === 'host_show') {
       renderHostPlay(s, root, actionDraft);
+      renderHostGallery(s);
     } else {
       const label = root.querySelector('[data-event="answer"] small');
       if (label) label.textContent = '자동 정답 / 오답 판정';
