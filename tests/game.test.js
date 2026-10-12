@@ -40,7 +40,7 @@ async function request(base, path, data) {
   return result;
 }
 
-test('세 참가자의 주제 비공개, 질문, 랜덤 시작, 과반수 투표, 점수 누적, 관전', async () => {
+test('세 참가자의 주제 비공개, 질문, 랜덤 시작, 자동 정답 판정, 점수 누적, 관전', async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   const clients = [];
@@ -73,30 +73,18 @@ test('세 참가자의 주제 비공개, 질문, 랜덤 시작, 과반수 투표
     assert.equal(aClient.state.pending.text, '제가 과일인가요?');
     send(current, 'confirm_question');
     await waitFor(aClient, s => !s.pending && s.turnId !== current.session.userId);
-    // 오답 과반수 → 득점하지 않고 오른쪽 사람에게 넘어가야 한다.
+    // 오답 입력은 투표 없이 즉시 처리하고 다음 차례로 넘어간다.
     current = clients.find(x => x.session.userId === aClient.state.turnId);
     const wrongActorId = current.session.userId;
     send(current, 'answer', { text: '틀린 정답' });
-    await waitFor(aClient, s => s.pending?.type === 'answer');
-    const negativeVoters = clients.slice(0,3).filter(x => x.session.userId !== wrongActorId);
-    send(negativeVoters[0], 'vote', { vote: 'wrong' });
-    await waitFor(aClient, s => s.pending?.wrong === 1);
-    send(negativeVoters[1], 'vote', { vote: 'wrong' });
     await waitFor(aClient, s => !s.pending && s.turnId !== wrongActorId);
     assert.equal(aClient.state.winners.length, 0, '오답은 득점하지 않음');
 
+    const answerMap = { [a.userId]: '피카츄', [b.userId]: '사과', [c.userId]: '바나나' };
     for (let rank = 0; rank < 3; rank++) {
       current = clients.find(x => x.session.userId === aClient.state.turnId);
       assert.ok(current, '활성 참가자 존재');
-      send(current, 'answer', {text: '정답후보'});
-      await waitFor(aClient, s => s.pending?.type === 'answer');
-      await waitFor(specClient, s => s.pending?.type === 'answer');
-      assert.equal(specClient.state.pending?.canVote, false);
-      const eligible = clients.slice(0,3).filter(x => x.session.userId !== current.session.userId);
-      send(eligible[0], 'vote', { vote:'correct' });
-      await waitFor(aClient, s => s.pending?.correct === 1);
-      assert.equal(aClient.state.winners.length, rank, '과반수 이전 미확정');
-      send(eligible[1], 'vote', { vote:'correct' });
+      send(current, 'answer', { text: answerMap[current.session.userId] });
       if (rank < 2) await waitFor(aClient, s => s.winners.length === rank + 1);
       else await waitFor(aClient, s => s.stage === 'setup' && s.lastOutcome?.winners.length === 3);
     }
