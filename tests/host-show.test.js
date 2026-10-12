@@ -9,7 +9,7 @@ function makeGame(names) {
   for (const name of names) joinRoom(owner.code, name, 'player');
   const spectators = joinRoom(owner.code, '관중', 'spectator');
   for (const person of room.members) {
-    room.clients.add({ userId: person.id, dead: false, send() {} });
+    room.clients.add({ user: person, userId: person.id, dead: false, send() {} });
   }
   const host = room.members.find(p => p.id === owner.userId);
   const contest = room.members.filter(p => p.role === 'player' && p.id !== host.id);
