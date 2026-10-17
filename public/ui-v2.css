@@ -65,3 +65,5 @@
 @media(min-width:721px) and (max-width:1260px){
  .board-panel .circle-area{justify-content:center}
 }
+
+.input-key-hint{font-size:11px;color:#a89bbf;margin:7px 0 15px;line-height:1.55}
