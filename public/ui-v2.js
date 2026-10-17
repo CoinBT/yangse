@@ -2,7 +2,17 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const choices = ['나라','게임','영화','애니메이션','음식','동물','스포츠','직업','유명인','장소'];
+  let choices = ['나라','게임','영화','애니메이션','음식','동물','스포츠','직업','유명인','장소'];
+  // The server and roulette use the same catalog; no duplicate client-side pool.
+  fetch('/categories.json', {cache:'no-store'})
+    .then(response => { if (!response.ok) throw new Error('카테고리 목록을 읽을 수 없어요.'); return response.json(); })
+    .then(list => {
+      if (!Array.isArray(list) || list.length < 10) return;
+      choices = list;
+      const label = document.querySelector('#categoryDisplay > span');
+      if (label) label.textContent = '🎰 이번 판 대분류 · 총 ' + choices.length + '개';
+    })
+    .catch(error => console.warn('룰렛 카테고리를 기본 목록으로 표시합니다.', error));
   let panel = '';
   let lastCategoryKey = '';
   let spinTimer = null;
@@ -55,13 +65,13 @@
     clearInterval(spinTimer);
     box.classList.add('roulette-spinning');
     let n = 0;
-    text.textContent = '🎲 ' + choices[0];
+    text.textContent = '🎲 ' + choices[Math.floor(Math.random() * choices.length)];
     spinTimer = setInterval(() => {
       if (++n >= 10) {
         clearInterval(spinTimer);
         box.classList.remove('roulette-spinning');
         text.textContent = '✨ ' + (s.category || '자유 주제');
-      } else text.textContent = '🎲 ' + choices[n % choices.length];
+      } else text.textContent = '🎲 ' + choices[Math.floor(Math.random() * choices.length)];
     }, 90);
   }
   function render(s,send) {

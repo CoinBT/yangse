@@ -13,7 +13,10 @@ const FILE = path.join(process.env.DATA_DIR || path.join(__dirname, 'data'), 'ro
 const rooms = new Map();
 const MAX_PLAYERS = 12;
 const RANK_POINTS = [100, 80, 60];
-const TOPIC_CATEGORIES = Object.freeze(['나라', '게임', '영화', '애니메이션', '음식', '동물', '스포츠', '직업', '유명인', '장소']);
+const TOPIC_CATEGORIES = Object.freeze(require('./public/categories.json'));
+if (TOPIC_CATEGORIES.length < 2 || new Set(TOPIC_CATEGORIES).size !== TOPIC_CATEGORIES.length) {
+  throw new Error('대분류 목록이 잘못됐어요.');
+}
 function randomCategory() { return TOPIC_CATEGORIES[crypto.randomInt(TOPIC_CATEGORIES.length)]; }
 const MAX_BODY = 8192;
 
@@ -546,7 +549,7 @@ function readBody(req) {
     req.on('error', reject);
   });
 }
-const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.ico':'image/x-icon' };
+const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.ico':'image/x-icon', '.json':'application/json; charset=utf-8' };
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
@@ -560,7 +563,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method !== 'GET') return respond(res, 405, { error: '허용되지 않은 요청이에요.' });
     let resource = url.pathname === '/' ? '/index.html' : url.pathname;
-    if (!['/index.html', '/style.css', '/app.js', '/favicon.svg', '/chat.js', '/chat.css', '/modes.js', '/modes.css', '/ui-v2.js', '/ui-v2.css', '/voice.js', '/turn-chime.js'].includes(resource)) return respond(res, 404, { error: '페이지를 찾을 수 없어요.' });
+    if (!['/index.html', '/style.css', '/app.js', '/favicon.svg', '/chat.js', '/chat.css', '/modes.js', '/modes.css', '/ui-v2.js', '/ui-v2.css', '/voice.js', '/turn-chime.js', '/categories.json'].includes(resource)) return respond(res, 404, { error: '페이지를 찾을 수 없어요.' });
     const file = path.join(ROOT, resource);
     res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options':'nosniff' });
     fs.createReadStream(file).pipe(res);
