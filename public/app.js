@@ -268,6 +268,7 @@
     window.YSMode?.render(state, act, draftText);
     window.YSUI?.render(state, act);
     window.YSVoice?.render(state);
+    window.YSTurnChime?.render(state);
   }
   async function copy(value) {
     try { await navigator.clipboard.writeText(value); toast('클립보드에 복사했어요!'); }
