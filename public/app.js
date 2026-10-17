@@ -266,7 +266,7 @@
     renderScores(); renderHistory(); renderFeed();
     window.YSChat?.render(state);
     window.YSMode?.render(state, act, draftText);
-    window.YSUI?.render(state);
+    window.YSUI?.render(state, act);
     window.YSVoice?.render(state);
   }
   async function copy(value) {
