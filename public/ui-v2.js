@@ -74,7 +74,10 @@
     const hint = $('boardHint');
     if (hint && s.stage === 'setup' && s.gameMode === 'classic') hint.textContent = '대분류: ' + (s.category || '자유');
     const action = $('actionText');
-    if (action) action.title = 'Enter: 질문 제출 · Shift+Enter: 정답 제출';
+    if (action) {
+      action.title = 'Enter: 질문 제출 · Shift+Enter: 정답 제출';
+      if (!document.getElementById('actionKeyHint')) action.insertAdjacentHTML('afterend','<p id="actionKeyHint" class="input-key-hint">↵ Enter: 질문 제출 · ⇧ Shift + Enter: 정답 제출</p>');
+    }
   }
   window.YSUI = {render,send:null,current:null,close};
 })();
