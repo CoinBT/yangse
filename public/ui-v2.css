@@ -1,0 +1,69 @@
+/* v2 — expanded game board with collapsible left-side management */
+.app-shell{max-width:1650px;padding-left:24px;padding-right:24px}
+.game-grid{grid-template-columns:72px minmax(0,1fr) minmax(305px,355px);gap:18px;align-items:start}
+.game-tools{position:sticky;top:18px;display:flex;flex-direction:column;gap:12px;z-index:5}
+.tool-button{background:#241f37;border:1px solid #54466f;border-radius:16px;color:#e2d7f8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:800;padding:14px 6px;min-height:78px}
+.tool-button .tool-icon{font-size:25px}
+.tool-button:hover,.tool-button.active{background:#483562;border-color:#b18dff;color:#fff}
+.side-panel{min-width:0}
+.board-panel{min-width:0;padding:27px 21px;min-height:unset}
+.category-display{display:flex;align-items:center;justify-content:center;gap:15px;flex-wrap:wrap;margin:18px 0 0;border:1px solid #6a4e9a;background:linear-gradient(120deg,#332445,#4c2e67);border-radius:18px;padding:15px 18px;text-align:center;box-shadow:0 4px 25px #0003}
+.category-display>span{font-size:13px;font-weight:800;color:#d2c0ec}
+.category-display strong{font-size:clamp(22px,2vw,30px);color:#ffe7ac;font-weight:900}
+.category-display.roulette-spinning strong{animation:categoryPop .16s ease-in-out infinite alternate}
+@keyframes categoryPop{from{opacity:.6;transform:translateY(-2px)}to{opacity:1;transform:translateY(2px)}}
+.circle-area{overflow:auto;overflow-y:hidden;display:flex;justify-content:center;align-items:center;min-height:770px;padding:62px 65px 70px;margin:0 -12px;scrollbar-width:thin;scrollbar-color:#665283 transparent}
+.circle-board{width:730px;min-width:730px;flex-shrink:0;aspect-ratio:1}
+.ring-outer{width:85%;height:85%}
+.seat{width:137px;min-height:108px;border-radius:17px;padding:10px 8px;gap:5px}
+.seat-avatar{width:34px;height:34px;font-size:17px}
+.seat-name{font-size:15px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-height:2.6em}
+.seat-detail{font-size:12px;line-height:1.35;white-space:normal;max-width:100%;max-height:2.9em;overflow:hidden;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.gallery-name{font-size:12px;white-space:normal;overflow-wrap:anywhere}
+.gallery-topic{font-size:15px;line-height:1.45;overflow-wrap:anywhere;word-break:normal}
+.gallery-items{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gallery-card{padding:13px}
+.status-row{gap:10px 14px}
+.voice-toggle{border:1px solid #9f80cf;background:#382850;color:#eddfff;border-radius:12px;padding:9px 13px;font-size:13px;font-weight:900}
+.voice-toggle[aria-pressed="true"]{background:#2e5a47;border-color:#6bdda7;color:#ddffec}
+.voice-toggle:disabled{opacity:.45}
+.voice-status{font-size:12px;color:#afa3c4}
+.voice-remote-audio{width:0;height:0;overflow:hidden}
+.utility-drawer{position:fixed;left:max(16px,calc((100vw - 1650px)/2 + 22px));top:17vh;width:min(395px,calc(100vw - 32px));max-height:76vh;overflow:auto;z-index:35;border:1px solid #77619f;border-radius:21px;background:#231b32;box-shadow:0 24px 90px #000a;padding:23px}
+.drawer-backdrop{position:fixed;inset:0;background:#05050bae;z-index:34}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:13px;border-bottom:1px solid #544262;margin-bottom:15px}
+.drawer-head h2{font-size:21px}.drawer-hint{font-size:12px;color:#b5aac9;margin-bottom:16px;line-height:1.65}
+.drawer-manage-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #433952;padding:13px 0}
+.drawer-manage-row b{font-size:14px;overflow-wrap:anywhere}
+.drawer-manage-row span{display:block;color:#a69bb8;font-size:11px;padding-top:4px}
+.drawer-manage-row button{white-space:nowrap}
+.lower-grid{margin-top:20px}
+#actionText::placeholder{color:#867a9e;opacity:1}
+@media(max-width:1260px){
+ .game-grid{grid-template-columns:67px minmax(0,1fr)}
+ .side-panel{grid-column:2}
+ .circle-area{justify-content:center}
+}
+@media(max-width:720px){
+ .app-shell{padding-left:13px;padding-right:13px}
+ .game-grid{grid-template-columns:minmax(0,1fr);gap:13px}
+ .game-tools{grid-row:1;display:flex;flex-direction:row;position:static}
+ .tool-button{min-height:unset;flex-direction:row;padding:11px 14px;border-radius:12px;gap:8px}
+ .tool-button .tool-icon{font-size:18px}
+ .board-panel{grid-row:2;padding:18px 10px}
+ .side-panel{grid-column:1;grid-row:3}
+ .category-display{margin:13px 3px 5px}
+ .circle-area{justify-content:flex-start;min-height:715px;padding:38px 55px 36px;margin:0}
+ .circle-board{width:630px;min-width:630px}
+ .seat{width:115px;min-height:95px;padding:7px 5px}
+ .seat-avatar{width:26px;height:26px;font-size:14px}
+ .seat-name{font-size:13px}
+ .seat-detail{font-size:11px}
+ .gallery-items{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .utility-drawer{left:16px;top:10vh;max-height:85vh}
+}
+@media(min-width:721px) and (max-width:1260px){
+ .board-panel .circle-area{justify-content:center}
+}
+
+.input-key-hint{font-size:11px;color:#a89bbf;margin:7px 0 15px;line-height:1.55}

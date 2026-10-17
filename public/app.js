@@ -89,6 +89,7 @@
     const path = `${proto}//${location.host}/ws?room=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}`;
     socket = new WebSocket(path);
     window.YSChat?.attachSocket(socket);
+    window.YSVoice?.attachSocket(socket);
     socket.onopen = () => connectionStatus(true);
     socket.onmessage = (evt) => {
       let message;
@@ -125,7 +126,7 @@
     if (state.me.id === p.id) return '🔒 나의 주제 비밀';
     if (state.me.role === 'spectator' && !spoilerShown) return p.subjectReady ? '비밀 주제' : '주제 대기';
     const subject = state.topics[p.id];
-    if (subject) return subject.length > 10 ? `${subject.slice(0, 10)}…` : subject;
+    if (subject) return subject;
     return '주제 대기';
   }
   function renderBoard() {
@@ -171,7 +172,7 @@
   }
   function renderSetup() {
     $('actionEyebrow').textContent = 'YOUR MISSION';
-    $('actionTitle').textContent = '비밀 주제 정하기';
+    $('actionTitle').textContent = '상대 문제 정하기';
     $('actionIcon').textContent = '✏️';
     const content = $('actionContent');
     const count = state.people.length;
@@ -186,9 +187,9 @@
       draftTopic = right.text;
     }
     if (right && draftTopic === '' && right.assigned) draftTopic = right.text;
-    let html = `<div class="mission-box"><div class="mission-label">RIGHT SIDE PLAYER →</div><div class="mission-name">${right ? esc(right.name) : '친구를 초대해 주세요'}</div><div class="mission-hint">내 오른쪽(시계 방향)에 있는 사람의 머리 위에 붙일 비밀 주제를 정해 주세요.</div></div>`;
+    let html = `<div class="mission-box"><div class="mission-label">OPPONENT CHALLENGE →</div><div class="mission-name">${right ? esc(right.name) : '친구를 초대해 주세요'}</div><div class="mission-hint">내 오른쪽(시계 방향)에 있는 사람의 머리 위에 붙일 비밀 주제를 정해 주세요.</div></div>`;
     if (right) {
-      html += `<label for="topicInput">${esc(right.name)}님의 비밀 주제</label><input class="field" id="topicInput" type="text" maxlength="50" placeholder="예: 손흥민, 바나나, 피카츄..." value="${esc(draftTopic)}"><button class="btn btn-primary btn-wide" id="saveTopic" type="button">${right.assigned ? '주제 수정해서 저장' : '이 주제로 확정하기'} <span>✓</span></button>`;
+      html += `<label for="topicInput">${esc(right.name)}님의 정답 정하기</label><input class="field" id="topicInput" type="text" maxlength="50" placeholder="예: 손흥민, 바나나, 피카츄..." value="${esc(draftTopic)}"><button class="btn btn-primary btn-wide" id="saveTopic" type="button">${right.assigned ? '주제 수정해서 저장' : '이 주제로 확정하기'} <span>✓</span></button>`;
       html += `<div class="mission-note">🔐 주제를 받는 사람에게만 이 단어가 숨겨져요. 라운드 시작 전까지 변경할 수 있어요.</div>`;
     } else html += `<div class="alert-slice purple">친구가 한 명 이상 참가하면 오른쪽 사람에게 주제를 줄 수 있어요.</div>`;
     html += `<div class="progress-track"><div class="progress-fill" style="width:${count ? 100 * ready / count : 0}%"></div></div><div class="progress-caption"><span>주제 설정 완료</span><b>${ready} / ${count}</b></div>`;
@@ -199,7 +200,7 @@
       html += `<button class="btn btn-mint btn-wide" data-action="start" ${state.canStart ? '' : 'disabled'}>🚀 게임 시작하기 <span>→</span></button>`;
       html += `<p class="note-small">${state.canStart ? '준비 끝! 시작하면 첫 번째 순서가 무작위로 정해져요.' : '최소 2명, 모두 온라인, 전원 주제 지정 시 시작 가능해요.'}</p>`;
       if (count > 1) {
-        html += `<div class="mission-box"><div class="mission-label">HOST CONTROLS</div><div class="mission-hint" style="margin-top:9px">참가자 관리 · 퇴장 시 모든 주제를 다시 입력해야 해요.</div>${state.people.filter(p => p.id !== state.hostId).map(p => `<div class="manage-row" style="display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:10px;font-size:12px"><span>${esc(p.name)} <small style="color:${p.online ? '#82e9c4' : '#ff91a4'}">${p.online ? '● 온라인' : '● 오프라인'}</small></span><button class="btn btn-outline btn-small" data-event="remove" data-id="${esc(p.id)}">내보내기</button></div>`).join('')}</div>`;
+        html += `<div class="mission-box utility-managed hidden"><div class="mission-label">HOST CONTROLS</div><div class="mission-hint" style="margin-top:9px">참가자 관리 · 퇴장 시 모든 주제를 다시 입력해야 해요.</div>${state.people.filter(p => p.id !== state.hostId).map(p => `<div class="manage-row" style="display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:10px;font-size:12px"><span>${esc(p.name)} <small style="color:${p.online ? '#82e9c4' : '#ff91a4'}">${p.online ? '● 온라인' : '● 오프라인'}</small></span><button class="btn btn-outline btn-small" data-event="remove" data-id="${esc(p.id)}">내보내기</button></div>`).join('')}</div>`;
       }
     } else {
       html += `<div class="alert-slice purple">👑 호스트가 게임 시작 버튼을 누르면 라운드가 시작돼요.</div>`;
@@ -219,7 +220,7 @@
     }
     if (!pending) {
       if (meTurn) {
-        html += `<div class="mission-box"><div class="mission-label">YOUR TURN!</div><div class="mission-name">나의 정체를 추리하세요</div><div class="mission-hint">자신의 주제는 볼 수 없어요. 질문하거나 정답을 말해 보세요.</div></div><label for="actionText">질문/정답 내용 (선택사항)</label><input type="text" class="field" maxlength="100" id="actionText" placeholder="말로 하거나 여기에 입력하세요" value="${esc(draftText)}"><div class="action-buttons"><button class="btn btn-outline" data-event="question">❔ 질문하기<small>확인 후 차례 넘기기</small></button><button class="btn btn-yellow" data-event="answer">✨ 정답 말하기<small>투표로 정답 판정</small></button></div>`;
+        html += `<div class="mission-box"><div class="mission-label">YOUR TURN!</div><div class="mission-name">나의 정체를 추리하세요</div><div class="mission-hint">자신의 주제는 볼 수 없어요. 질문하거나 정답을 말해 보세요.</div></div><label for="actionText">질문/정답 내용 (선택사항)</label><input type="text" class="field" maxlength="100" id="actionText" placeholder="이곳에 질문 혹은 정답을 입력하고 엔터" value="${esc(draftText)}"><div class="action-buttons"><button class="btn btn-outline" data-event="question">❔ 질문하기<small>확인 후 차례 넘기기</small></button><button class="btn btn-yellow" data-event="answer">✨ 정답 말하기<small>자동 정답 판정</small></button></div>`;
       } else {
         html += `<div class="mission-box"><div class="mission-label">NOW PLAYING</div><div class="mission-name">${esc(active?.name || '접속 대기')}님</div><div class="mission-hint">차례가 돌아올 때까지 기다려 주세요. 질문이 끝나면 오른쪽 사람에게 순서가 넘어가요.</div></div>`;
       }
@@ -256,8 +257,8 @@
     if (!state) return;
     $('peopleCount').textContent = state.people.length;
     $('spectatorCount').textContent = state.spectatorCount;
-    $('phaseBadge').textContent = state.stage === 'setup' ? '✏️ 주제 정하기' : `🎲 ${state.roundNo}판 진행 중`;
-    $('roomSubtitle').textContent = state.stage === 'setup' ? '오른쪽 사람의 주제를 정하고 호스트가 시작해 주세요.' : '첫 순서는 랜덤! 오른쪽(시계 방향)으로 차례가 돌아가요.';
+    $('phaseBadge').textContent = state.stage === 'setup' ? '✏️ 상대 문제 정하기' : `🎲 ${state.roundNo}판 진행 중`;
+    $('roomSubtitle').textContent = state.stage === 'setup' ? '이번 판의 대분류 안에서 오른쪽 사람의 정답을 지정해 주세요.' : '첫 순서는 랜덤! 오른쪽(시계 방향)으로 차례가 돌아가요.';
     $('selfBadge').textContent = state.me.host ? '👑 호스트' : state.me.role === 'spectator' ? '👀 관전자' : `😊 ${state.me.name}`;
     renderBoard();
     renderGallery();
@@ -265,6 +266,9 @@
     renderScores(); renderHistory(); renderFeed();
     window.YSChat?.render(state);
     window.YSMode?.render(state, act, draftText);
+    window.YSUI?.render(state, act);
+    window.YSVoice?.render(state);
+    window.YSTurnChime?.render(state);
   }
   async function copy(value) {
     try { await navigator.clipboard.writeText(value); toast('클립보드에 복사했어요!'); }
@@ -296,6 +300,19 @@
       case 'remove': if (confirm('이 참가자를 내보낼까요? 모든 주제를 다시 입력해야 해요.')) act('remove_player', { userId: button.dataset.id }); break;
     }
   });
+  document.addEventListener('keydown', event => {
+    if (event.target?.id !== 'actionText' || event.key !== 'Enter' || event.isComposing) return;
+    event.preventDefault();
+    if (!isMeTurn() || state?.pending) return;
+    const text = event.target.value.trim();
+    if (event.shiftKey) {
+      if (!text) return toast('정답을 입력해 주세요.');
+      act('answer', { text });
+    } else {
+      act('question', { text });
+    }
+    draftText = '';
+  });
   $('tabCreate').addEventListener('click', () => tab('create'));
   $('tabJoin').addEventListener('click', () => tab('join'));
   document.querySelectorAll('.role').forEach(button => button.addEventListener('click', () => selectRole(button.dataset.role)));
@@ -310,12 +327,13 @@
     }
   });
   $('leaveRoom').addEventListener('click', () => {
+    window.YSVoice?.shutdown();
     shouldReconnect = false;
     if (socket) socket.close();
     localStorage.removeItem('ysgame_current_room');
     location.href = '/';
   });
-  window.addEventListener('beforeunload', () => { shouldReconnect = false; });
+  window.addEventListener('beforeunload', () => { shouldReconnect = false; window.YSVoice?.shutdown(); });
   async function init() {
     $('nickname').value = localStorage.getItem('ysgame_lastname') || '';
     if (inviteCode) { tab('join'); $('joinCode').value = inviteCode; }

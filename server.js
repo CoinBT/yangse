@@ -13,6 +13,8 @@ const FILE = path.join(process.env.DATA_DIR || path.join(__dirname, 'data'), 'ro
 const rooms = new Map();
 const MAX_PLAYERS = 12;
 const RANK_POINTS = [100, 80, 60];
+const TOPIC_CATEGORIES = Object.freeze(['나라', '게임', '영화', '애니메이션', '음식', '동물', '스포츠', '직업', '유명인', '장소']);
+function randomCategory() { return TOPIC_CATEGORIES[crypto.randomInt(TOPIC_CATEGORIES.length)]; }
 const MAX_BODY = 8192;
 
 function load() {
@@ -30,6 +32,7 @@ function load() {
       room.roundNo ||= 0;
       room.stage ||= 'setup';
       room.gameMode ||= 'classic';
+      room.category ||= randomCategory();
       room.turnSteps ||= 0;
       // 서버 재시작 뒤에는 누가 접속 중인지 재확인하므로 대기 중인 투표를 취소합니다.
       room.pending = null;
@@ -95,7 +98,7 @@ function createRoom(name) {
     code, hostId: host.id, stage: 'setup', members: [host], clients: new Set(),
     topics: {}, scores: { [host.id]: { name, total: 0, wins: 0 } },
     history: [], winners: [], roundNo: 0, turnOrder: [], cursor: 0,
-    pending: null, lastOutcome: null, log: [], chat: [], gameMode: 'classic',
+    pending: null, lastOutcome: null, log: [], chat: [], gameMode: 'classic', category: randomCategory(),
     turnSteps: 0, createdAt: Date.now()
   };
   rooms.set(code, room);
@@ -149,6 +152,8 @@ function publicState(room, viewer) {
   const votes = room.pending?.votes || {};
   return {
     code: room.code, stage: room.stage, roundNo: room.roundNo, gameMode: room.gameMode || 'classic',
+    category: room.category || '나라',
+    voicePeers: [...new Set([...room.clients].filter(ws => ws.voiceOn && !ws.dead && ws.user?.role === 'player').map(ws => ws.userId))],
     turnSteps: room.turnSteps || 0, maxTurns: hostShow(room) ? challengers(room).length * 4 : 0,
     threshold: hostShow(room) ? threshold(room) : 0, challengerCount: hostShow(room) ? challengers(room).length : 0,
     me: { id: viewer.id, name: viewer.name, role: viewer.role, host: viewer.id === room.hostId },
@@ -220,6 +225,7 @@ function finishRound(room, forced = false) {
   room.lastOutcome = outcome;
   room.stage = 'setup';
   room.topics = {};
+  room.category = randomCategory();
   room.winners = [];
   room.pending = null;
   room.turnOrder = [];
@@ -429,6 +435,7 @@ function command(room, user, commandName, payload = {}) {
 class TinySocket {
   constructor(socket) {
     this.socket = socket;
+    this.voiceOn = false;
     this.buffer = Buffer.alloc(0);
     this.dead = false;
     socket.on('data', data => this.onData(data));
@@ -481,7 +488,23 @@ class TinySocket {
       catch { this.send({ type: 'error', message: '잘못된 요청 형식이에요.' }); continue; }
       try {
         if (!payload || typeof payload !== 'object') throw new Error('잘못된 요청이에요.');
-        command(this.room, this.user, payload.action, payload);
+        if (payload.action === 'voice_join') {
+          if (this.user.role !== 'player') fail('음성채팅은 참가자만 이용할 수 있어요.');
+          this.voiceOn = true;
+          broadcast(this.room);
+        } else if (payload.action === 'voice_leave') {
+          this.voiceOn = false;
+          broadcast(this.room);
+        } else if (payload.action === 'voice_signal') {
+          if (!this.voiceOn) fail('음성채팅을 먼저 켜 주세요.');
+          if (!['offer','answer','candidate'].includes(payload.signal?.type)) fail('잘못된 음성 연결 메시지예요.');
+          const to = String(payload.to || '');
+          if (to === this.userId) fail('자신에게 보낼 수 없어요.');
+          const peer = [...this.room.clients].find(c => c.voiceOn && !c.dead && c.userId === to);
+          if (!peer) fail('상대가 음성채팅을 사용하지 않아요.');
+          if (JSON.stringify(payload.signal).length > 13000) fail('음성 연결 데이터가 너무 커요.');
+          peer.send({ type: 'voice_signal', from: this.userId, signal: payload.signal });
+        } else command(this.room, this.user, payload.action, payload);
       } catch (err) { this.send({ type: 'error', message: err.message || '오류가 발생했어요.' }); }
     }
   }
@@ -527,7 +550,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method !== 'GET') return respond(res, 405, { error: '허용되지 않은 요청이에요.' });
     let resource = url.pathname === '/' ? '/index.html' : url.pathname;
-    if (!['/index.html', '/style.css', '/app.js', '/favicon.svg', '/chat.js', '/chat.css', '/modes.js', '/modes.css'].includes(resource)) return respond(res, 404, { error: '페이지를 찾을 수 없어요.' });
+    if (!['/index.html', '/style.css', '/app.js', '/favicon.svg', '/chat.js', '/chat.css', '/modes.js', '/modes.css', '/ui-v2.js', '/ui-v2.css', '/voice.js', '/turn-chime.js'].includes(resource)) return respond(res, 404, { error: '페이지를 찾을 수 없어요.' });
     const file = path.join(ROOT, resource);
     res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options':'nosniff' });
     fs.createReadStream(file).pipe(res);

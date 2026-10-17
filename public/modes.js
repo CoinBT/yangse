@@ -28,7 +28,7 @@
       if (!count) html += '<div class="alert-slice purple">도전자 한 명 이상이 입장하면 주제를 지정할 수 있어요.</div>';
       for (const t of s.topicTargets) {
         const value = Object.prototype.hasOwnProperty.call(draftTopics, t.id) ? draftTopics[t.id] : t.text;
-        html += '<div class="host-topic"><label for="mode-topic-' + esc(t.id) + '">' + esc(t.name) + '님의 비밀 주제 ' + (t.assigned ? '✅' : '⏳') + '</label>' +
+        html += '<div class="host-topic"><label for="mode-topic-' + esc(t.id) + '">' + esc(t.name) + '님의 정답 ' + (t.assigned ? '✅' : '⏳') + '</label>' +
           '<div class="host-topic-row"><input class="field" id="mode-topic-' + esc(t.id) + '" data-mode-topic-input="' + esc(t.id) + '" maxlength="50" placeholder="예: 피카츄, 손흥민" value="' + esc(value) + '">' +
           '<button type="button" class="btn btn-outline btn-small" data-host-topic-save="' + esc(t.id) + '">저장</button></div></div>';
       }
@@ -36,7 +36,7 @@
       html += '<button type="button" class="btn btn-mint btn-wide" data-host-start ' + (s.canStart ? '' : 'disabled') + '>🚀 Host Show! 시작하기 →</button>';
       html += '<p class="note-small">' + (s.canStart ? '첫 도전자의 순서는 무작위로 결정됩니다.' : '도전자 전원이 온라인이고 비밀 주제가 준비되어야 시작할 수 있어요.') + '</p>';
       for (const p of s.people.filter(p => p.id !== s.hostId)) {
-        html += '<div class="manage-row"><span>' + esc(p.name) + ' · ' + (p.online ? '온라인' : '오프라인') + '</span><button type="button" class="btn btn-outline btn-small" data-host-remove="' + esc(p.id) + '">내보내기</button></div>';
+        // 참가자 강퇴는 왼쪽 관리 패널에서 진행합니다.
       }
     } else if (s.me.role === 'spectator') {
       html += '<div class="alert-slice purple">👀 관전 모드 — 도전자들의 주제는 비공개예요.</div>';
@@ -61,7 +61,7 @@
     if (s.winners.length) html += '<div class="alert-slice purple">✅ 정답 완료: ' + s.winners.map(w => esc(w.name)).join(', ') + '</div>';
     if (!waiting && isMyTurn) {
       html += '<div class="mission-box"><div class="mission-name">내 비밀 주제를 추리해 보세요!</div><div class="mission-hint">질문은 호스트가 답변합니다. 정답을 직접 입력하면 서버에서 즉시 판정해요.</div></div>' +
-        '<label for="actionText">질문 또는 예상 정답</label><input class="field" type="text" id="actionText" maxlength="100" placeholder="정답일 땐 정확한 단어를 입력해 주세요" value="' + esc(actionDraft || '') + '">' +
+        '<label for="actionText">질문 또는 예상 정답</label><input class="field" type="text" id="actionText" maxlength="100" placeholder="이곳에 질문 혹은 정답을 입력하고 엔터" value="' + esc(actionDraft || '') + '">' +
         '<div class="action-buttons"><button type="button" class="btn btn-outline" data-event="question">❔ 호스트에게 질문<small>답변 후 다음 차례</small></button>' +
         '<button type="button" class="btn btn-yellow" data-event="answer">✨ 정답 시도<small>자동 정답 / 오답</small></button></div>';
     } else if (waiting && waiting.type === 'question') {
@@ -117,7 +117,7 @@
     }
     if (s.stage === 'setup') {
       if (s.gameMode === 'host_show') {
-        $('actionTitle').textContent = 'Host Show! 주제 준비';
+        $('actionTitle').textContent = '상대 문제 정하기';
         $('actionIcon').textContent = '👑';
         renderHostSetup(s, root);
         $('boardHint').textContent = '호스트가 각 도전자에게 주제 지정';
@@ -131,7 +131,7 @@
       const label = root.querySelector('[data-event="answer"] small');
       if (label) label.textContent = '자동 정답 / 오답 판정';
       const field = root.querySelector('#actionText');
-      if (field) field.placeholder = '정답 시도는 텍스트 입력 필수 · 질문은 음성도 가능';
+      if (field) field.placeholder = '이곳에 질문 혹은 정답을 입력하고 엔터';
     }
     renderHistory(s);
     $('phaseBadge').textContent = s.stage === 'setup' ? (s.gameMode === 'host_show' ? '👑 Host Show! 준비' : '✏️ 클래식 준비') : (s.gameMode === 'host_show' ? '👑 Host Show! 진행 중' : '🎭 클래식 진행 중');

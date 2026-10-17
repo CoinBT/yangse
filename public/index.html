@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/chat.css">
   <link rel="stylesheet" href="/modes.css">
+  <link rel="stylesheet" href="/ui-v2.css">
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -24,7 +25,7 @@
         <h1>내 정체를<br><span>맞혀봐!</span></h1>
         <p>친구가 정해준 비밀 주제로 질문하고, 추리하고, 정답을 외쳐보세요. 원형으로 돌아가는 12인 실시간 양세찬 게임!</p>
         <div class="feature-pills"><span>✦ 최대 12명 참가</span><span>◉ 관전 인원 제한 없음</span><span>⚡ 정답 자동 판정</span></div>
-        <div class="rule-preview"><span class="preview-label">HOW TO PLAY</span><div><b>01</b> 오른쪽 사람의 주제를 적어요</div><div><b>02</b> 랜덤 시작, 시계 방향으로 차례 진행</div><div><b>03</b> 정답 입력 → 자동 판정 · 100 / 80 / 60점!</div></div>
+        <div class="rule-preview"><span class="preview-label">HOW TO PLAY</span><div><b>01</b> 대분류를 뽑고 오른쪽 사람의 문제를 정해요</div><div><b>02</b> 랜덤 시작, 시계 방향으로 차례 진행</div><div><b>03</b> 정답 입력 → 자동 판정 · 100 / 80 / 60점!</div></div>
       </div>
       <div class="entry-card">
         <div class="card-topline"><span>🎲</span><span class="tiny-light">● LIVE ROOM</span></div>
@@ -49,25 +50,37 @@
         <div><span class="eyebrow" id="roomEyebrow">PARTY ROOM</span><h1>우리는 지금 <em>누구?</em></h1><p class="muted" id="roomSubtitle">게임 참가자가 모이면 주제를 정해 주세요.</p></div>
         <div class="room-share"><span class="share-label">초대 코드</span><div><strong id="roomCode" class="room-code">------</strong><button class="icon-button" id="copyCode" title="코드 복사">⧉</button></div><button class="btn btn-outline btn-small" id="copyInvite">🔗 초대 링크 복사</button></div>
       </section>
-      <div class="status-row"><span id="phaseBadge" class="phase-badge">주제 정하기</span><span class="light-divider"></span><span>🙋 <strong id="peopleCount">0</strong> / 12</span><span>👀 관전 <strong id="spectatorCount">0</strong></span><span class="connection-status" id="selfBadge"></span></div>
+      <div class="status-row"><span id="phaseBadge" class="phase-badge">상대 문제 정하기</span><span class="light-divider"></span><span>🙋 <strong id="peopleCount">0</strong> / 12</span><span>👀 관전 <strong id="spectatorCount">0</strong></span><span class="connection-status" id="selfBadge"></span><button type="button" id="voiceToggle" class="voice-toggle" aria-pressed="false">🎙 음성채팅 On</button><span id="voiceStatus" class="voice-status" role="status">마이크 꺼짐</span></div>
       <div class="game-grid">
+        <nav class="game-tools" aria-label="게임 도구">
+          <button type="button" id="scoreToggle" class="tool-button" aria-controls="utilityDrawer" aria-expanded="false" data-drawer="score"><span class="tool-icon">🏆</span><span>점수</span></button>
+          <button type="button" id="kickToggle" class="tool-button" aria-controls="utilityDrawer" aria-expanded="false" data-drawer="kick"><span class="tool-icon">🛡️</span><span>강퇴</span></button>
+        </nav>
         <section class="board-panel panel">
           <div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">THE CIRCLE</span><h2>둥글게, 둥글게!</h2></div><span id="boardHint" class="hint-pill">시계 방향 →</span></div>
+          <div id="categoryDisplay" class="category-display" aria-live="polite"><span>🎰 이번 판 대분류</span><strong>추첨 중…</strong></div>
           <div class="circle-area"><div id="circleBoard" class="circle-board"><div class="ring ring-outer"></div><div class="ring ring-mid"></div><div id="boardCenter" class="board-center"></div><div id="seats" class="seats"></div></div></div>
           <div class="legend"><span><i class="legend-dot dot-me"></i>나</span><span><i class="legend-dot dot-turn"></i>현재 차례</span><span><i class="legend-dot dot-finished"></i>정답 완료</span><span><i class="legend-dot dot-offline"></i>오프라인</span></div>
           <div id="topicGallery" class="topic-gallery hidden"></div>
         </section>
         <aside class="side-panel">
-          <section class="panel action-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm" id="actionEyebrow">YOUR MISSION</span><h2 id="actionTitle">비밀 주제 정하기</h2></div><span id="actionIcon" class="panel-emoji">✏️</span></div><div id="actionContent"></div></section>
+          <section class="panel action-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm" id="actionEyebrow">YOUR MISSION</span><h2 id="actionTitle">상대 문제 정하기</h2></div><span id="actionIcon" class="panel-emoji">✏️</span></div><div id="actionContent"></div></section>
           <section class="panel chat-panel" aria-labelledby="chatTitle">
             <div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">LIVE CHAT</span><h2 id="chatTitle">💬 실시간 채팅</h2></div><span class="chat-tag">참가자 · 관전자</span></div>
             <div id="chatMessages" class="chat-messages" role="log" aria-label="게임방 채팅" aria-live="polite"><div class="chat-empty">친구들과 이야기해 보세요! 🎉</div></div>
             <form id="chatForm" class="chat-form" autocomplete="off"><label class="sr-only" for="chatInput">메시지 입력</label><input id="chatInput" type="text" maxlength="300" placeholder="모두에게 메시지 보내기…" aria-label="채팅 메시지"><button id="chatSend" class="btn btn-primary" type="submit">전송 ↗</button></form>
             <p class="chat-helper">참가자와 관전자 모두 채팅할 수 있어요. · 최대 300자</p>
           </section>
-          <section class="panel scoreboard-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">HALL OF FAME</span><h2>누적 스코어보드</h2></div><span class="panel-emoji">🏆</span></div><div id="scoreboard" class="scoreboard"></div></section>
+
         </aside>
       </div>
+      <div class="drawer-backdrop hidden" id="drawerBackdrop"></div>
+      <aside class="utility-drawer hidden" id="utilityDrawer" role="dialog" aria-modal="true" aria-label="게임 관리 패널">
+        <div class="drawer-head"><h2 id="drawerTitle">🏆 스코어보드</h2><button type="button" id="drawerClose" class="icon-button" aria-label="패널 닫기">✕</button></div>
+        <section id="scorePane"><p class="drawer-hint">게임 내 누적 점수</p><div id="scoreboard" class="scoreboard"></div></section>
+        <section id="kickPane" class="hidden"><p class="drawer-hint">호스트만 대기실에서 참가자를 내보낼 수 있어요.</p><div id="kickManage"></div></section>
+      </aside>
+      <div id="voiceRemoteAudio" class="voice-remote-audio" aria-hidden="true"></div>
       <div class="lower-grid">
         <section class="panel history-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">PAST GAMES</span><h2>지난 게임 결과</h2></div><span class="panel-emoji">📜</span></div><div id="historyContent"></div></section>
         <section class="panel feed-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">ACTIVITY FEED</span><h2>게임 진행 기록</h2></div><span class="panel-emoji">⚡</span></div><div id="feedContent"></div></section>
@@ -78,6 +91,9 @@
   <div id="toast" class="toast" aria-live="polite"></div>
   <script src="/chat.js" defer></script>
   <script src="/modes.js" defer></script>
+  <script src="/ui-v2.js" defer></script>
+  <script src="/voice.js" defer></script>
+  <script src="/turn-chime.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
