@@ -109,14 +109,15 @@
       setStatus('이 브라우저는 음성채팅을 지원하지 않아요.'); return;
     }
     starting = true; ui(); setStatus('기본 마이크 사용 권한을 요청 중…');
+    let errorMessage = '';
     try {
       // deviceId를 지정하지 않으면 브라우저/OS의 기본 입력장치를 사용합니다.
       localStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
       enabled = true;
       send({action:'voice_join'});
     } catch (e) {
-      setStatus(e?.name === 'NotAllowedError' ? '마이크 권한을 허용해 주세요.' : '마이크를 켤 수 없어요.');
-    } finally { starting = false; ui(); }
+      errorMessage = e?.name === 'NotAllowedError' ? '마이크 권한을 허용해 주세요.' : '마이크를 켤 수 없어요.';
+    } finally { starting = false; ui(); if (errorMessage) setStatus(errorMessage); }
   }
   function stop() {
     enabled = false;
