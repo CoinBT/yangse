@@ -39,6 +39,12 @@
     if (!member || !confirm(member.name + '님을 내보낼까요? 상대 문제는 다시 지정해야 해요.')) return;
     window.YSUI.send('remove_player', { userId:member.id });
   });
+  $('rerollCategory').addEventListener('click', () => {
+    const s = window.YSUI.current;
+    if (!s?.me.host || s.stage !== 'setup' || !window.YSUI.send) return;
+    if (s.readyCount > 0 && !confirm('대분류를 다시 뽑으면 이미 작성한 상대 문제 ' + s.readyCount + '개가 초기화돼요. 계속할까요?')) return;
+    window.YSUI.send('reroll_category');
+  });
   function drawCategory(s) {
     const box = $('categoryDisplay');
     if (!box) return;
@@ -70,6 +76,9 @@
       const people = s.people.filter(p=>p.id!==s.hostId);
       manage.innerHTML = people.length ? people.map(p => '<div class="drawer-manage-row"><div><b>'+esc(p.name)+'</b><span>'+(p.online?'● 온라인':'○ 오프라인')+'</span></div><button class="btn btn-danger btn-small" data-kick-id="'+esc(p.id)+'">강퇴</button></div>').join('') : '<p class="drawer-hint">강퇴할 참가자가 없어요.</p>';
     }
+    const rerollButton = $('rerollCategory');
+    rerollButton.classList.toggle('hidden', !(s.me.host && s.stage === 'setup'));
+    rerollButton.disabled = !(s.me.host && s.stage === 'setup');
     drawCategory(s);
     const hint = $('boardHint');
     if (hint && s.stage === 'setup' && s.gameMode === 'classic') hint.textContent = '대분류: ' + (s.category || '자유');
