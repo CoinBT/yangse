@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/chat.css">
   <link rel="stylesheet" href="/modes.css">
   <link rel="stylesheet" href="/ui-v2.css">
+  <link rel="stylesheet" href="/howto.css">
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -25,6 +26,7 @@
         <h1>내 정체를<br><span>맞혀봐!</span></h1>
         <p>친구가 정해준 비밀 주제로 질문하고, 추리하고, 정답을 외쳐보세요. 원형으로 돌아가는 12인 실시간 양세찬 게임!</p>
         <div class="feature-pills"><span>✦ 최대 12명 참가</span><span>◉ 관전 인원 제한 없음</span><span>⚡ 정답 자동 판정</span></div>
+        <button type="button" class="howto-home-button" data-howto-open aria-haspopup="dialog"><span class="howto-home-icon">📖</span><span><strong>How to Play</strong><small>게임 규칙과 조작 방법 알아보기</small></span><span class="howto-home-arrow">↗</span></button>
         <div class="rule-preview"><span class="preview-label">HOW TO PLAY</span><div><b>01</b> 대분류를 뽑고 오른쪽 사람의 문제를 정해요</div><div><b>02</b> 랜덤 시작, 시계 방향으로 차례 진행</div><div><b>03</b> 정답 입력 → 자동 판정 · 100 / 80 / 60점!</div></div>
       </div>
       <div class="entry-card">
@@ -55,6 +57,7 @@
         <nav class="game-tools" aria-label="게임 도구">
           <button type="button" id="scoreToggle" class="tool-button" aria-controls="utilityDrawer" aria-expanded="false" data-drawer="score"><span class="tool-icon">🏆</span><span>점수</span></button>
           <button type="button" id="kickToggle" class="tool-button" aria-controls="utilityDrawer" aria-expanded="false" data-drawer="kick"><span class="tool-icon">🛡️</span><span>강퇴</span></button>
+          <button type="button" id="howToRoomButton" class="tool-button howto-tool-button" data-howto-open aria-haspopup="dialog" title="게임 방법 보기"><span class="tool-icon">📖</span><span>How to Play</span></button>
         </nav>
         <section class="board-panel panel">
           <div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">THE CIRCLE</span><h2>둥글게, 둥글게!</h2></div><span id="boardHint" class="hint-pill">시계 방향 →</span></div>
@@ -88,12 +91,75 @@
       <footer class="footer">🎭 양세찬 게임 · 호스트가 서버를 운영합니다. <button id="leaveRoom" class="text-button">이 화면에서 나가기</button></footer>
     </main>
   </div>
+  <div id="howToOverlay" class="howto-overlay hidden" aria-hidden="true">
+    <div class="howto-dialog" id="howToDialog" role="dialog" aria-modal="true" aria-labelledby="howToTitle" tabindex="-1">
+      <header class="howto-header">
+        <div><span class="howto-eyebrow">WELCOME TO THE GAME</span><h2 id="howToTitle">📖 How to Play</h2><p>양세찬 게임 · 처음 하는 사람도 쉽게 시작해요!</p></div>
+        <button type="button" id="howToClose" class="howto-close" aria-label="게임 설명 닫기">✕</button>
+      </header>
+      <nav class="howto-tabs" role="tablist" aria-label="게임 방법 목차">
+        <button type="button" id="howToTabBasics" class="howto-tab active" role="tab" aria-selected="true" aria-controls="howToBasics" data-howto-tab="basics">🎲 시작하기</button>
+        <button type="button" id="howToTabClassic" class="howto-tab" role="tab" aria-selected="false" aria-controls="howToClassic" data-howto-tab="classic" tabindex="-1">🎭 클래식</button>
+        <button type="button" id="howToTabHost" class="howto-tab" role="tab" aria-selected="false" aria-controls="howToHost" data-howto-tab="host" tabindex="-1">👑 Host Show!</button>
+        <button type="button" id="howToTabControls" class="howto-tab" role="tab" aria-selected="false" aria-controls="howToControls" data-howto-tab="controls" tabindex="-1">⌨️ 조작·기능</button>
+      </nav>
+      <div class="howto-content" id="howToContent">
+        <section class="howto-page" id="howToBasics" role="tabpanel" aria-labelledby="howToTabBasics" data-howto-page="basics">
+          <h3>친구들과 문제를 내고 정체를 맞혀보자!</h3>
+          <p class="howto-lead">자신에게 주어진 정답은 보이지 않아요. 다른 사람에게 질문하고 단서를 모아 정답을 맞히는 게임입니다.</p>
+          <div class="howto-steps">
+            <div class="howto-step"><b>01</b><div><strong>방 만들기 / 입장하기</strong><p>닉네임으로 게임방을 만들고 초대 링크를 공유해요. 참가자는 2~12명, 관전자는 인원 제한 없이 참여할 수 있어요.</p></div></div>
+            <div class="howto-step"><b>02</b><div><strong>게임 모드와 대분류 확인</strong><p>호스트가 클래식 또는 Host Show!를 선택해요. <em>나라, 게임, 음식</em> 등 435개 대분류 중 하나가 무작위로 뽑혀요.</p></div></div>
+            <div class="howto-step"><b>03</b><div><strong>상대 문제 정하기</strong><p>대분류에 맞는 정답을 작성해요. 클래식은 오른쪽 사람의 정답을, Host Show!는 호스트가 도전자들의 정답을 정합니다.</p></div></div>
+            <div class="howto-step"><b>04</b><div><strong>호스트가 게임 시작!</strong><p>모두 준비되면 시작해요. 첫 차례는 무작위, 이후 시계 방향으로 진행돼요.</p></div></div>
+          </div>
+          <div class="howto-tip">💡 <strong>대분류 다시 뽑기:</strong> 호스트는 게임 시작 전에 다른 분류를 뽑을 수 있어요. 이 경우 이전에 정한 문제들은 초기화돼요.</div>
+        </section>
+        <section class="howto-page hidden" id="howToClassic" role="tabpanel" aria-labelledby="howToTabClassic" data-howto-page="classic">
+          <h3>🎭 클래식 모드</h3>
+          <p class="howto-lead">오른쪽 사람에게 정답을 정해주고, 내 차례에는 나에게 지정된 정답을 추리해요.</p>
+          <div class="howto-steps">
+            <div class="howto-step"><b>①</b><div><strong>질문하기</strong><p>내 차례에 질문을 입력하고 질문하기를 선택해요. 다른 사람들의 답을 들은 뒤 <strong>[확인 · 다음 사람]</strong>을 눌러 순서를 넘겨요.</p></div></div>
+            <div class="howto-step"><b>②</b><div><strong>정답 시도하기</strong><p>정답이라고 생각한 단어를 입력하고 정답 시도를 눌러요. 서버가 투표 없이 즉시 정답/오답을 판정합니다.</p></div></div>
+            <div class="howto-step"><b>③</b><div><strong>점수 획득하기</strong><p>1등 <strong>100점</strong>, 2등 <strong>80점</strong>, 3등 <strong>60점</strong>. 정답이 틀리면 점수 없이 다음 사람 차례가 돼요.</p></div></div>
+            <div class="howto-step"><b>④</b><div><strong>다음 판으로!</strong><p>최대 3명의 정답자가 나오면 라운드가 끝나고 새로운 문제를 정해요. 누적 점수는 스코어보드에서 확인해요.</p></div></div>
+          </div>
+          <div class="howto-tip">🔎 <strong>자동 판정 참고:</strong> 공백·대소문자·일부 문장부호 차이는 무시하지만, 별칭이나 같은 뜻의 다른 단어는 정답으로 인식하지 않을 수 있어요.</div>
+        </section>
+        <section class="howto-page hidden" id="howToHost" role="tabpanel" aria-labelledby="howToTabHost" data-howto-page="host">
+          <h3>👑 Host Show! — 호스트 vs 도전자</h3>
+          <p class="howto-lead">호스트 한 명이 문제 출제와 질문 답변을 맡고, 나머지 도전자들이 힘을 합쳐 정답을 맞히는 팀 대결이에요.</p>
+          <div class="howto-steps">
+            <div class="howto-step"><b>①</b><div><strong>호스트가 도전자별 정답 지정</strong><p>호스트가 각 도전자의 비밀 정답을 정해요. 도전자에게는 자신의 정답이 보이지 않아요.</p></div></div>
+            <div class="howto-step"><b>②</b><div><strong>도전자가 질문</strong><p>자기 차례에 호스트에게 질문해요. 호스트가 <strong>답변 후 다음 차례</strong>를 누르면 다음 도전자에게 넘어가요.</p></div></div>
+            <div class="howto-step"><b>③</b><div><strong>정답 즉시 판정</strong><p>도전자가 정답을 입력하면 자동 판정돼요. 맞힌 도전자는 정답 완료 상태가 됩니다.</p></div></div>
+            <div class="howto-step"><b>④</b><div><strong>4바퀴 안에 승부 결정</strong><p>4바퀴 안에 <strong>도전자 과반수</strong>가 정답이면 도전자팀 승리! 그러지 못하면 호스트가 승리합니다.</p></div></div>
+          </div>
+          <div class="howto-tip">🏆 <strong>점수 안내:</strong> Host Show!의 팀 승패는 지난 게임 기록에 남고, 클래식 개인 점수에는 더해지지 않아요.</div>
+        </section>
+        <section class="howto-page hidden" id="howToControls" role="tabpanel" aria-labelledby="howToTabControls" data-howto-page="controls">
+          <h3>⌨️ 버튼과 편의 기능</h3>
+          <div class="howto-steps">
+            <div class="howto-step"><b>↵</b><div><strong>Enter</strong><p>내 차례의 질문 입력창에서 <strong>Enter</strong>를 누르면 질문을 제출할 수 있어요.</p></div></div>
+            <div class="howto-step"><b>⇧</b><div><strong>Shift + Enter</strong><p>질문 입력창에서 <strong>Shift + Enter</strong>를 누르면 정답을 시도해요. 화면의 정답 버튼으로도 제출할 수 있어요.</p></div></div>
+            <div class="howto-step"><b>🏆</b><div><strong>왼쪽 점수 · 강퇴</strong><p>게임방 왼쪽 버튼으로 누적 점수판을 열고 닫을 수 있어요. 강퇴는 호스트가 대기실에서만 할 수 있어요.</p></div></div>
+            <div class="howto-step"><b>🎙</b><div><strong>음성채팅 On / Off</strong><p>음성채팅을 켜면 브라우저의 기본 마이크로 말할 수 있어요. 참가자용 기능이며 처음에는 마이크 권한 승인이 필요해요.</p></div></div>
+            <div class="howto-step"><b>💬</b><div><strong>실시간 채팅 · 관전</strong><p>참가자와 관전자 모두 텍스트 채팅에 참여할 수 있어요. 관전자는 게임 턴에 포함되지 않아요.</p></div></div>
+            <div class="howto-step"><b>🔔</b><div><strong>차례 알림음</strong><p>내 차례가 되면 짧은 띵동 소리가 나요. 브라우저에서 먼저 화면을 클릭해야 재생될 수 있어요.</p></div></div>
+          </div>
+          <div class="howto-tip">📱 <strong>모바일 지원:</strong> 스마트폰에서도 접속할 수 있고, 좌석이 많을 때는 게임판 영역을 좌우로 스크롤할 수 있어요.</div>
+        </section>
+      </div>
+      <footer class="howto-footer"><span>다 읽었나요? 이제 게임을 즐겨보세요!</span><button type="button" id="howToDone" class="btn btn-primary">이해했어요 ✓</button></footer>
+    </div>
+  </div>
   <div id="toast" class="toast" aria-live="polite"></div>
   <script src="/chat.js" defer></script>
   <script src="/modes.js" defer></script>
   <script src="/ui-v2.js" defer></script>
   <script src="/voice.js" defer></script>
   <script src="/turn-chime.js" defer></script>
+  <script src="/howto.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
