@@ -98,6 +98,11 @@
       if (message.type === 'state') {
         const previous = state;
         state = message.state;
+        if (previous && previous.category !== state.category && state.stage === 'setup') {
+          // 선택한 대분류가 바뀌면 작성 중이던 이전 분류의 문제도 비웁니다.
+          draftTopic = '';
+          draftTopicTarget = '';
+        }
         if (previous && previous.stage === 'play' && state.stage === 'setup' && state.lastOutcome?.round !== lastRoundSeen) {
           lastRoundSeen = state.lastOutcome.round;
           draftTopic = ''; draftText = '';
