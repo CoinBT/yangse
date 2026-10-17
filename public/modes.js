@@ -111,9 +111,9 @@
     state = s; send = act;
     const root = $('actionContent');
     if (!root) return;
-    if (previousRoomMode !== s.code + ':' + s.gameMode) {
+    if (previousRoomMode !== s.code + ':' + s.gameMode + ':' + s.category) {
       draftTopics = {}; draftReply = '';
-      previousRoomMode = s.code + ':' + s.gameMode;
+      previousRoomMode = s.code + ':' + s.gameMode + ':' + s.category;
     }
     if (s.stage === 'setup') {
       if (s.gameMode === 'host_show') {

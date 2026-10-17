@@ -295,6 +295,16 @@ function command(room, user, commandName, payload = {}) {
       appendChat(room, { kind: 'message', userId: user.id, name: user.name, role: user.role, text });
       break;
     }
+    case 'reroll_category': {
+      if (!isHost || !setup) fail('게임 시작 전 호스트만 대분류를 다시 뽑을 수 있어요.');
+      // 다른 대분류를 반드시 선택해 '다시 뽑기'가 같은 결과처럼 보이지 않도록 합니다.
+      const available = TOPIC_CATEGORIES.filter(category => category !== room.category);
+      room.category = available[crypto.randomInt(available.length)];
+      room.topics = {}; // 다른 대분류의 문제는 그대로 사용할 수 없으므로 재작성
+      note(room, '🎲 호스트가 대분류를 다시 뽑았어요: ' + room.category + ' · 상대 문제를 다시 정해 주세요.');
+      systemChat(room, '🎲 새로운 대분류: ' + room.category + ' (입력된 상대 문제가 초기화됐어요.)');
+      break;
+    }
     case 'set_mode': {
       if (!isHost || !setup) fail('대기실에서 호스트만 모드를 바꿀 수 있어요.');
       if (!['classic', 'host_show'].includes(payload.mode)) fail('지원하지 않는 게임 모드예요.');

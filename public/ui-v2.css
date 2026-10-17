@@ -67,3 +67,9 @@
 }
 
 .input-key-hint{font-size:11px;color:#a89bbf;margin:7px 0 15px;line-height:1.55}
+
+/* Host-only category reroll stays beside the roulette display. */
+.category-reroll{border:1px solid #d5b2fb;color:#f8edff;background:#62487f;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:900;white-space:nowrap;box-shadow:0 3px 12px #130b2580}
+.category-reroll:hover:not(:disabled){background:#765b9f;border-color:#efd3ff}
+.category-reroll:focus-visible{outline:3px solid #f3dbff;outline-offset:3px}
+@media(max-width:520px){.category-reroll{width:100%;max-width:230px}}
