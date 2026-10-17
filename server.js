@@ -563,7 +563,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method !== 'GET') return respond(res, 405, { error: '허용되지 않은 요청이에요.' });
     let resource = url.pathname === '/' ? '/index.html' : url.pathname;
-    if (!['/index.html', '/style.css', '/app.js', '/favicon.svg', '/chat.js', '/chat.css', '/modes.js', '/modes.css', '/ui-v2.js', '/ui-v2.css', '/voice.js', '/turn-chime.js', '/categories.json'].includes(resource)) return respond(res, 404, { error: '페이지를 찾을 수 없어요.' });
+    if (!['/index.html', '/style.css', '/app.js', '/favicon.svg', '/chat.js', '/chat.css', '/modes.js', '/modes.css', '/ui-v2.js', '/ui-v2.css', '/voice.js', '/turn-chime.js', '/categories.json', '/howto.js', '/howto.css'].includes(resource)) return respond(res, 404, { error: '페이지를 찾을 수 없어요.' });
     const file = path.join(ROOT, resource);
     res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options':'nosniff' });
     fs.createReadStream(file).pipe(res);
