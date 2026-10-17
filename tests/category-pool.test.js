@@ -26,7 +26,7 @@ test('서버는 공통 카탈로그에서 방과 다음 판의 대분류를 선�
   assert.ok(categories.includes(room.category));
 });
 
-test('434개 풀에서 다시 뽑으면 결과가 달라지며 문제는 초기화된다', () => {
+test('435개 풀에서 다시 뽑으면 결과가 달라지며 문제는 초기화된다', () => {
   const session = createRoom('호스트');
   const room = rooms.get(session.code);
   const host = room.members[0];
