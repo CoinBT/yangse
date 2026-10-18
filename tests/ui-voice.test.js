@@ -2,11 +2,12 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const {createRoom,joinRoom,rooms,publicState,finishRound} = require('../server');
+const categories = require('../public/categories.json');
 
 test('신규 방은 정해진 대분류에서 하나를 랜덤으로 배정한다', () => {
   const data = createRoom('출제자');
   const room = rooms.get(data.code);
-  assert.ok(['나라','게임','영화','애니메이션','음식','동물','스포츠','직업','유명인','장소'].includes(room.category));
+  assert.ok(categories.includes(room.category));
   const state = publicState(room,room.members[0]);
   assert.equal(state.category,room.category);
   assert.equal(state.stage,'setup');

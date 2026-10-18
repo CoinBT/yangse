@@ -550,6 +550,42 @@ function readBody(req) {
   });
 }
 const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.ico':'image/x-icon', '.json':'application/json; charset=utf-8' };
+// Public pages are kept distinct from the WebSocket-enabled game so that
+// AdSense can be reviewed on actual editorial content, not on a live chat room.
+const PAGES = Object.freeze({
+  '/':'landing.html', '/play':'index.html', '/guide':'guide.html', '/faq':'faq.html',
+  '/about':'about.html', '/privacy':'privacy.html', '/terms':'terms.html',
+  '/contact':'contact.html', '/safety':'safety.html'
+});
+const STATIC = new Set([
+  '/style.css','/app.js','/favicon.svg','/chat.js','/chat.css',
+  '/modes.js','/modes.css','/ui-v2.js','/ui-v2.css','/voice.js',
+  '/turn-chime.js','/categories.json','/howto.js','/howto.css','/site.css'
+]);
+const ADSENSE_ID = /^(ca-pub-[0-9]{16})$/.test(process.env.ADSENSE_CLIENT_ID || '')
+  ? process.env.ADSENSE_CLIENT_ID : '';
+const PUBLIC_AD_PAGES = new Set(['/','/guide','/faq','/about']);
+const SITE_URL = /^https:\/\/[a-z0-9.-]+(?::[0-9]+)?$/i.test((process.env.SITE_URL||'').replace(/\/$/,''))
+  ? process.env.SITE_URL.replace(/\/$/,'') : 'https://yangsechan-webgame.onrender.com';
+function serveDocument(res, filename, pathName) {
+  const abs = path.join(ROOT,filename);
+  fs.readFile(abs,'utf8',(error,html)=>{
+    if(error) return respond(res,404,{error:'페이지를 찾을 수 없어요.'});
+    // The owner must supply their actual assigned ca-pub ID.
+    // Ads stay disabled inside /play, chat, support or legal pages.
+    if(ADSENSE_ID && PUBLIC_AD_PAGES.has(pathName)) {
+      const adScript = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='+ADSENSE_ID+'" crossorigin="anonymous"></script>';
+      html = html.replace('</head>',adScript+'\n</head>');
+    }
+    const body=Buffer.from(html);
+    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':body.length,'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});
+    res.end(body);
+  });
+}
+function serveText(res,body,mime) {
+  res.writeHead(200,{'Content-Type':mime,'Cache-Control':'public, max-age=600','X-Content-Type-Options':'nosniff'});
+  res.end(body);
+}
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
@@ -562,11 +598,27 @@ const server = http.createServer(async (req, res) => {
       return respond(res, 200, result);
     }
     if (req.method !== 'GET') return respond(res, 405, { error: '허용되지 않은 요청이에요.' });
-    let resource = url.pathname === '/' ? '/index.html' : url.pathname;
-    if (!['/index.html', '/style.css', '/app.js', '/favicon.svg', '/chat.js', '/chat.css', '/modes.js', '/modes.css', '/ui-v2.js', '/ui-v2.css', '/voice.js', '/turn-chime.js', '/categories.json', '/howto.js', '/howto.css'].includes(resource)) return respond(res, 404, { error: '페이지를 찾을 수 없어요.' });
-    const file = path.join(ROOT, resource);
+    // Legacy room links were `/?room=CODE`; never break old invitations.
+    if(url.pathname==='/' && url.searchParams.has('room')) {
+      const code = (url.searchParams.get('room')||'').trim().toUpperCase().slice(0,30);
+      res.writeHead(302,{'Location':'/play?room='+encodeURIComponent(code),'Cache-Control':'no-store'}); return res.end();
+    }
+    if(url.pathname==='/index.html') {res.writeHead(301,{'Location':'/','Cache-Control':'no-cache'});return res.end();}
+    if(url.pathname==='/robots.txt') return serveText(res,'User-agent: *\nAllow: /\nSitemap: '+SITE_URL+'/sitemap.xml\n','text/plain; charset=utf-8');
+    if(url.pathname==='/sitemap.xml') {
+      const visible=['/','/guide','/faq','/about','/privacy','/terms','/contact','/safety'];
+      const items=visible.map(p=>'<url><loc>'+SITE_URL+p+'</loc></url>').join('');
+      return serveText(res,'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+items+'</urlset>','application/xml; charset=utf-8');
+    }
+    if(url.pathname==='/ads.txt') {
+      if(!ADSENSE_ID) return respond(res,404,{error:'광고 게시자 승인 정보가 아직 설정되지 않았어요.'});
+      return serveText(res,'google.com, '+ADSENSE_ID.slice(3)+', DIRECT, f08c47fec0942fa0\n','text/plain; charset=utf-8');
+    }
+    if(Object.prototype.hasOwnProperty.call(PAGES,url.pathname)) return serveDocument(res,PAGES[url.pathname],url.pathname);
+    if(!STATIC.has(url.pathname)) return respond(res,404,{error:'페이지를 찾을 수 없어요.'});
+    const file = path.join(ROOT, url.pathname);
     res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options':'nosniff' });
-    fs.createReadStream(file).pipe(res);
+    fs.createReadStream(file).on('error',()=>res.end()).pipe(res);
   } catch (err) {
     if (!res.headersSent) respond(res, err.status || 400, { error: err.message || '서버 오류가 발생했어요.' });
     else res.end();

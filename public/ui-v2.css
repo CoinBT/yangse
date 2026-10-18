@@ -73,3 +73,9 @@
 .category-reroll:hover:not(:disabled){background:#765b9f;border-color:#efd3ff}
 .category-reroll:focus-visible{outline:3px solid #f3dbff;outline-offset:3px}
 @media(max-width:520px){.category-reroll{width:100%;max-width:230px}}
+
+/* Public-edition navigation back to the content site. */
+.game-site-link{color:#dcc4ff;font-size:12px;font-weight:800;border:1px solid #59466f;border-radius:10px;padding:9px 12px;background:#30253f;white-space:nowrap}
+.game-site-link:hover{background:#47345b;color:#fff}
+.footer a{color:#bea3ee;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:760px){.game-site-link{font-size:11px;padding:7px 8px}}
