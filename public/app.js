@@ -51,7 +51,7 @@
     session = data;
     localStorage.setItem('ysgame_room_' + data.code, JSON.stringify(data));
     localStorage.setItem('ysgame_current_room', data.code);
-    history.replaceState(null, '', `/?room=${encodeURIComponent(data.code)}`);
+    history.replaceState(null, '', `/play?room=${encodeURIComponent(data.code)}`);
     $('landing').classList.add('hidden');
     $('roomView').classList.remove('hidden');
     $('roomCode').textContent = data.code;
@@ -323,7 +323,7 @@
   document.querySelectorAll('.role').forEach(button => button.addEventListener('click', () => selectRole(button.dataset.role)));
   $('entryForm').addEventListener('submit', handleEntry);
   $('copyCode').addEventListener('click', () => session && copy(session.code));
-  $('copyInvite').addEventListener('click', () => session && copy(`${location.origin}/?room=${session.code}`));
+  $('copyInvite').addEventListener('click', () => session && copy(`${location.origin}/play?room=${session.code}`));
   $('actionContent').addEventListener('click', (event) => {
     if (event.target.closest('#saveTopic')) {
       const topic = ($('topicInput')?.value || '').trim();
