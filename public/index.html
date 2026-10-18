@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,follow">
+  <meta name="description" content="양세찬 게임 플레이 화면. 친구와 방을 만들고 정체를 맞혀보세요.">
   <meta name="theme-color" content="#120f1d">
   <title>양세찬 게임 · WHO AM I?</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -17,7 +19,7 @@
   <div class="app-shell">
     <header class="topbar">
       <a href="/" class="brand" aria-label="양세찬게임 홈"><span class="brand-mark">🎭</span><span><strong>양세찬 게임</strong><small>WHO AM I?</small></span></a>
-      <div class="top-meta"><span class="live-indicator"><span class="live-dot" id="liveDot"></span><span id="connectionText">온라인 파티 게임</span></span><span class="top-tag">2–12 PLAYERS</span></div>
+      <div class="top-meta"><a class="game-site-link" href="/">⌂ 사이트 홈</a><a class="game-site-link" href="/guide">📖 전체 설명</a><span class="live-indicator"><span class="live-dot" id="liveDot"></span><span id="connectionText">온라인 파티 게임</span></span><span class="top-tag">2–12 PLAYERS</span></div>
     </header>
 
     <main id="landing" class="landing">
@@ -88,7 +90,7 @@
         <section class="panel history-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">PAST GAMES</span><h2>지난 게임 결과</h2></div><span class="panel-emoji">📜</span></div><div id="historyContent"></div></section>
         <section class="panel feed-panel"><div class="panel-title-row"><div><span class="eyebrow eyebrow-sm">ACTIVITY FEED</span><h2>게임 진행 기록</h2></div><span class="panel-emoji">⚡</span></div><div id="feedContent"></div></section>
       </div>
-      <footer class="footer">🎭 양세찬 게임 · 호스트가 서버를 운영합니다. <button id="leaveRoom" class="text-button">이 화면에서 나가기</button></footer>
+      <footer class="footer">🎭 양세찬 게임 · <a href="/privacy">개인정보 안내</a> · <a href="/contact">문의</a> · <a href="/safety">이용자 안전</a> · <button id="leaveRoom" class="text-button">게임방에서 나가기</button></footer>
     </main>
   </div>
   <div id="howToOverlay" class="howto-overlay hidden" aria-hidden="true">
