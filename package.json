@@ -2,9 +2,14 @@
   "name": "yangsechan-circle-game",
   "version": "1.0.0",
   "private": true,
-  "description": "호스트 PC에서 실행하는 실시간 양세찬게임 - 최대 12명 / 관전 무제한",
+  "description": "웹브라우저에서 누구나 무료로 플레이하는 2~12인 실시간 추리 파티게임",
   "main": "server.js",
-  "scripts": { "start": "node server.js", "test": "node --test tests/*.test.js" },
-  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test --test-concurrency=1 tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "license": "MIT"
 }
